@@ -1,0 +1,38 @@
+### Dependencies
+node_modules/
+
+### Build output
+dist/
+
+### Environment files and secrets
+.env
+.env.*
+!.env.example
+
+### Logs and runtime files
+*.log
+logs/
+*.pid
+*.pid.lock
+
+### Test, coverage, and local caches
+coverage/
+.nyc_output/
+.cache/
+.eslintcache
+.npm/
+
+### Editor settings
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+
+### Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
