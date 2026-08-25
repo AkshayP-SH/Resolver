@@ -1,8 +1,10 @@
+import "dotenv/config";
 const express = require("express");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://<db_username>:hv5SxjhgCWgeuIBI@resolver.liy2vyf.mongodb.net/?appName=Resolver";
+const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri, {
   serverApi: {
