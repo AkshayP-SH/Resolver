@@ -1,0 +1,26 @@
+### Dependencies
+node_modules/
+
+### Vite / frontend build output
+dist/
+dist-ssr/
+.vite/
+
+### Environment files
+.env
+.env.*
+!.env.example
+
+### Logs and runtime files
+*.log
+logs/
+*.pid
+*.pid.lock
+
+### Local tooling and caches
+.cache/
+.eslintcache
+.parcel-cache/
+.npm/
+
+
