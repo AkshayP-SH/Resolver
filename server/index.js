@@ -1,8 +1,12 @@
 import "dotenv/config";
 import express from "express";
 import connectDB from "./src/config/db.js";
+import User from "./src/models/User.js";
+import Complaint from "./src/models/Complaint.js";
+
 
 const app = express();
+app.use(express.json());
 const PORT = process.env.PORT;
 
 async function startserver() {
@@ -12,7 +16,7 @@ async function startserver() {
       console.log(`Server is running on port ${PORT}`);
     })
   } catch (e) {
-    console.error("DB connection error",e);
+    console.error("theres a db error",e);
     process.exit(1);
   }
 
