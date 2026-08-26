@@ -19,7 +19,7 @@ async function startserver() {
       console.log(`Server is running on port ${PORT}`);
     })
   } catch (e) {
-    console.error("theres a db error",e);
+    console.error("theres a db error or auth error",e);
     process.exit(1);
   }
 
