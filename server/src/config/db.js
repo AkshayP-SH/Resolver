@@ -1,17 +1,17 @@
+import dns from "node:dns";
+import mongoose from "mongoose";
 
-const mongoose = require('mongoose');
-const uri = process.env.MONGO_URI;
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
-const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
-
-async function run() {
+const connectDB = async () => {
   try {
-    await mongoose.connect(uri, clientOptions);
-    await mongoose.connection.db.admin().command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await mongoose.disconnect();
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    });
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error("DB Connection Error:", error.message);
+    throw error;
   }
-}
-run().catch(console.dir);
+};
+
+export default connectDB;
