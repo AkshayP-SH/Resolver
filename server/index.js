@@ -3,6 +3,9 @@ import express from "express";
 import connectDB from "./src/config/db.js";
 import cors from "cors";
 import router from "./src/routers/auth.router.js";
+import protect from './src/middleware/authMiddleware.js';
+
+
 
 
 const app = express();
