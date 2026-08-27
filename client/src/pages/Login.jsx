@@ -4,11 +4,27 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault(); //prevents the blank space thing?
-    
-    console.log("Attempting login with:", email, password);
-    //need to send it to /api/aith/login
+    try { 
+        console.log("Attempting login with:", email, password);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+            method: "POST",
+            body: JSON.stringify({ email, password }),
+            headers: {
+            "Content-Type": "application/json",
+            },
+        });
+        if (!response.ok) {
+        throw new Error("something wong", response.status,response.message);
+        }
+        const data = await response.json();
+        localStorage.setItem("token", data.token);
+        window.location.href = "/dashboard";
+        console.log("Login successful");
+    } catch (error) {
+        console.error(error);
+    }
   };
 
   return (

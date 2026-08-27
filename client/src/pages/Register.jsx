@@ -5,10 +5,29 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try{
     console.log("Attempting register with:", name, email, password);
-    //send this thing to /api/auth/register
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+      method: "POST",
+      body: JSON.stringify({ name, email, password }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    if (!response.ok) {
+      throw new Error("something wong", response.status,response.message);
+    }
+    const data = await response.json();
+    window.location.href = "/login";
+    console.log("Registration successful", data);
+    windows.alert("Registration successful, Please Login");
+  } catch (error) {
+    console.error(error);
+  }
+    
+    
   };
 
   return (
