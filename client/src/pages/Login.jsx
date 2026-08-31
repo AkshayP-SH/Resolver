@@ -105,12 +105,12 @@ export default function Login() {
               </button>
             </form>
 
-            {/* <p className="text-center mt-6 text-base-content/60">
+            <p className="text-center mt-6 text-base-content/60">
               Don't have an account?{' '}
               <Link to="/register" className="link link-primary">
                 Create one
               </Link>
-            </p> */}
+            </p>
           </div>
         </div>
       </main>

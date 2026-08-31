@@ -130,12 +130,12 @@ export default function Register() {
               </button>
             </form>
 
-            {/* <p className="text-center mt-6 text-base-content/60">
+            <p className="text-center mt-6 text-base-content/60">
               Already have an account?{' '}
               <Link to="/login" className="link link-primary">
                 Sign in
               </Link>
-            </p> */}
+            </p>
           </div>
         </div>
       </main>

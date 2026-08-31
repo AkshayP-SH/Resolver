@@ -8,6 +8,7 @@ import { ThemeProvider } from './context/ThemeContext.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 //import './App.css' replace with tailwind
 
+
 function App() {
   return (
     <ThemeProvider> 
