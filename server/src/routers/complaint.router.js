@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
         }
         const complaints = await Complaint.find().populate('createdBy', 'name email role').populate('assignedTo', 'name email role').sort({ created_at: -1 });
 
-        res.json(complaints);
+        res.json({complaints});
     } catch (error) {
         res.status(500).json({message:"complaints not gound error",error});
     }
