@@ -37,13 +37,11 @@ export default function StaffDashboard() {
       <main className="flex-1 p-8">
         <div className="max-w-6xl mx-auto">
           
-          {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-black tracking-tight">Staff Queue</h1>
             <p className="text-base-content/60 mt-2">Complaints assigned to you for resolution.</p>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div className="card bg-base-100 shadow-sm rounded-none">
               <div className="card-body">
@@ -71,7 +69,6 @@ export default function StaffDashboard() {
             </div>
           </div>
 
-          {/* Action Bar */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Assigned Complaints</h2>
             <div className="flex gap-2">

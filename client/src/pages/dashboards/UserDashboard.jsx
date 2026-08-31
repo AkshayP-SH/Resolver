@@ -36,13 +36,11 @@ export default function UserDashboard() {
       <main className="flex-1 p-8">
         <div className="max-w-6xl mx-auto">
           
-          {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-black tracking-tight">My Complaints</h1>
             <p className="text-base-content/60 mt-2">Track and manage your submitted complaints.</p>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="card bg-base-100 shadow-sm rounded-none">
               <div className="card-body">
@@ -64,7 +62,6 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* Action Bar */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Your Complaints</h2>
             <button className="btn btn-primary rounded-none">
@@ -77,6 +74,7 @@ export default function UserDashboard() {
               <div className="text-center py-12 text-base-content/60">
                 <p className="text-lg mb-2">No complaints filed yet.</p>
                 <p className="text-sm">Click "File New Complaint" to submit your first complaint.</p>
+                {/* this shudnt show after one complaint */}
               </div>
             </div>
           </div>
