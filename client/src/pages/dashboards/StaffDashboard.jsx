@@ -75,8 +75,10 @@ export default function StaffDashboard() {
               <select className="select select-bordered rounded-none select-sm">
                 <option>All Statuses</option>
                 <option>Pending</option>
+                <option>Assigned</option>
                 <option>In Progress</option>
-                <option>Resolved</option>
+                <option>Solved</option>
+                <option>Rejected</option>
               </select>
             </div>
           </div>

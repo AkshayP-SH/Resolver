@@ -4,6 +4,7 @@ import connectDB from "./src/config/db.js";
 import cors from "cors";
 import router from "./src/routers/auth.router.js";
 import protect from './src/middleware/authMiddleware.js';
+import complaintRouter from './src/routers/complaint.router.js';
 
 
 
@@ -18,6 +19,7 @@ async function startserver() {
   try{
     await connectDB();
     app.use("/api/auth",router);
+    app.use('/api/complaints', protect, complaintRouter);
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     })

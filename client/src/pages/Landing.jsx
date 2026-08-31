@@ -122,12 +122,12 @@ export default function Landing() {
           <div className="lg:col-span-2 space-y-4 lg:pt-8">
             
             <div className="border border-base-300 bg-base-100 p-6 animate-fade-in-up delay-2">
-              <p className="text-4xl font-black tracking-tight">pull from complaints api</p>
+              <p className="text-4xl font-black tracking-tight">0</p>
               <p className="text-sm text-base-content/50 mt-1">Complaints resolved</p>
             </div>
 
             <div className="border border-base-300 bg-base-100 p-6 animate-fade-in-up delay-3">
-              <p className="text-4xl font-black tracking-tight">0.001 sec</p>
+              <p className="text-4xl font-black tracking-tight">0</p>
               <p className="text-sm text-base-content/50 mt-1">Average resolution time</p>
             </div>
 
