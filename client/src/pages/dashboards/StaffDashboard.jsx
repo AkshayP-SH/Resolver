@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { getComplaints, createComplaint, updateComplaint } from '../../services/api';
+import ComplaintDetailModal from '../../components/ComplaintDetailModal';
+import NewComplaintForm from '../../components/NewComplaintForm';
 
 export default function StaffDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('overview');
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -60,7 +63,7 @@ export default function StaffDashboard() {
   const renderPage = () => {
     switch (currentPage) {
       case 'overview':
-        return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} />;
+        return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} />;
       case 'all-complaints':
         return (
           <AllComplaintsView 
@@ -68,6 +71,7 @@ export default function StaffDashboard() {
             loading={loading} 
             onAssign={handleAssignToMe}
             showAssignButton={true}
+            onSelectComplaint={setSelectedComplaint}
           />
         );
       case 'assigned-to-me':
@@ -76,12 +80,13 @@ export default function StaffDashboard() {
             complaints={assignedToMe} 
             loading={loading}
             onStatusChange={handleStatusChange}
+            onSelectComplaint={setSelectedComplaint}
           />
         );
       case 'new-complaint':
         return <NewComplaintForm onCreated={fetchComplaints} />;
       default:
-        return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} />;
+        return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} />;
     }
   };
 
@@ -125,11 +130,20 @@ export default function StaffDashboard() {
           {renderPage()}
         </div>
       </main>
+
+      {/* Modal Rendered at Root Level */}
+      {selectedComplaint && (
+        <ComplaintDetailModal 
+          complaint={selectedComplaint} 
+          onClose={() => setSelectedComplaint(null)} 
+          onUpdate={fetchComplaints} 
+        />
+      )}
     </div>
   );
 }
 
-function StaffOverview({ complaints, assignedToMe, user }) {
+function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint }) {
   const total = complaints.length;
   const myAssigned = assignedToMe.length;
   const inProgress = assignedToMe.filter(c => c.status === 'IN_PROGRESS').length;
@@ -187,7 +201,7 @@ function StaffOverview({ complaints, assignedToMe, user }) {
                   {assignedToMe
                     .filter(c => c.status !== 'RESOLVED' && c.status !== 'CLOSED')
                     .map((complaint) => (
-                      <tr key={complaint._id}>
+                      <tr key={complaint._id} className="hover:bg-base-200 cursor-pointer" onClick={() => onSelectComplaint(complaint)}>
                         <td className="font-semibold">{complaint.title}</td>
                         <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
                         <td>
@@ -212,7 +226,7 @@ function StaffOverview({ complaints, assignedToMe, user }) {
   );
 }
 
-function AllComplaintsView({ complaints, loading, onAssign, showAssignButton }) {
+function AllComplaintsView({ complaints, loading, onAssign, showAssignButton, onSelectComplaint }) {
   if (loading) return <div className="text-center py-12">Loading...</div>;
 
   return (
@@ -238,7 +252,7 @@ function AllComplaintsView({ complaints, loading, onAssign, showAssignButton }) 
                 </thead>
                 <tbody>
                   {complaints.map((complaint) => (
-                    <tr key={complaint._id}>
+                    <tr key={complaint._id} className="hover:bg-base-200 cursor-pointer" onClick={() => onSelectComplaint(complaint)}>
                       <td className="font-semibold">{complaint.title}</td>
                       <td>{complaint.category}</td>
                       <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
@@ -258,7 +272,7 @@ function AllComplaintsView({ complaints, loading, onAssign, showAssignButton }) 
                           {!complaint.assignedTo && (
                             <button 
                               className="btn btn-primary btn-xs rounded-none"
-                              onClick={() => onAssign(complaint._id)}
+                              onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}
                             >
                               Assign to Me
                             </button>
@@ -277,7 +291,7 @@ function AllComplaintsView({ complaints, loading, onAssign, showAssignButton }) 
   );
 }
 
-function AssignedToMeView({ complaints, loading, onStatusChange }) {
+function AssignedToMeView({ complaints, loading, onStatusChange, onSelectComplaint }) {
   if (loading) return <div className="text-center py-12">Loading...</div>;
 
   return (
@@ -302,7 +316,7 @@ function AssignedToMeView({ complaints, loading, onStatusChange }) {
                 </thead>
                 <tbody>
                   {complaints.map((complaint) => (
-                    <tr key={complaint._id}>
+                    <tr key={complaint._id} className="hover:bg-base-200 cursor-pointer" onClick={() => onSelectComplaint(complaint)}>
                       <td className="font-semibold">{complaint.title}</td>
                       <td>{complaint.category}</td>
                       <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
@@ -321,6 +335,7 @@ function AssignedToMeView({ complaints, loading, onStatusChange }) {
                           className="select select-bordered select-sm rounded-none"
                           value={complaint.status}
                           onChange={(e) => onStatusChange(complaint._id, e.target.value)}
+                          onClick={(e) => e.stopPropagation()} // Prevents modal from opening
                         >
                           <option value="SUBMITTED">SUBMITTED</option>
                           <option value="ASSIGNED">ASSIGNED</option>
@@ -335,87 +350,6 @@ function AssignedToMeView({ complaints, loading, onStatusChange }) {
               </table>
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NewComplaintForm({ onCreated }) {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '',
-    location: '',
-    priority: 'MEDIUM',
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-
-  const categories = ['Infrastructure', 'Electricity', 'Water', 'Sanitation', 'Safety', 'IT', 'Other'];
-  const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess(false);
-    setSubmitting(true);
-
-    try {
-      await createComplaint(formData);
-      setSuccess(true);
-      setFormData({ title: '', description: '', category: '', location: '', priority: 'MEDIUM' });
-      onCreated();
-    } catch (err) {
-      setError(err.message || 'Failed to create complaint');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  return (
-    <div>
-      <h1 className="text-3xl font-black mb-6">File New Complaint</h1>
-      {success && <div className="alert alert-success rounded-none mb-4"><span>Complaint filed successfully!</span></div>}
-      {error && <div className="alert alert-error rounded-none mb-4"><span>{error}</span></div>}
-
-      <div className="card bg-base-100 shadow-sm rounded-none">
-        <div className="card-body">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="form-control">
-              <label className="label"><span className="label-text">Title</span></label>
-              <input type="text" name="title" value={formData.title} onChange={handleChange} className="input input-bordered rounded-none" required />
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Description</span></label>
-              <textarea name="description" value={formData.description} onChange={handleChange} className="textarea textarea-bordered rounded-none" rows="4" required />
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Category</span></label>
-              <select name="category" value={formData.category} onChange={handleChange} className="select select-bordered rounded-none" required>
-                <option value="">Select category</option>
-                {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-              </select>
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Location (optional)</span></label>
-              <input type="text" name="location" value={formData.location} onChange={handleChange} className="input input-bordered rounded-none" />
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Priority</span></label>
-              <select name="priority" value={formData.priority} onChange={handleChange} className="select select-bordered rounded-none">
-                {priorities.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-            <button type="submit" className="btn btn-primary rounded-none" disabled={submitting}>
-              {submitting ? 'Submitting...' : 'Submit Complaint'}
-            </button>
-          </form>
         </div>
       </div>
     </div>
