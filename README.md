@@ -29,7 +29,7 @@ Resolver introduces a transparent, GitHub Issues-inspired forum model. All compl
 
 ### For Users (Citizens / Employees)
 * **Transparent Tracking:** View all system complaints and track the exact lifecycle of any issue.
-* **Collaboration:** Upvote ("Me Too") existing complaints to signal priority to administrators.
+* **Collaboration:** Upvote existing complaints to signal priority to administrators.
 * **Audit Trail:** View the complete Status History timeline, reading the exact explanations staff provided when moving a ticket to *In Progress* or *Resolved*.
 * **Ownership:** Edit or delete self-filed complaints (only while in the `SUBMITTED` state).
 
