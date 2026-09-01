@@ -1,13 +1,3 @@
-Here is the complete, professional, and slightly fancy README.md for your GitHub repository. 
-
-To use this:
-1. Create a `README.md` file in the root of your `resolver/` folder.
-2. Copy and paste the markdown below.
-3. Create a folder in your project root called `docs/screenshots/` and drop your images there to match the paths!
-
-***
-
-```markdown
 <div align="center">
 
 # 📋 Resolver
