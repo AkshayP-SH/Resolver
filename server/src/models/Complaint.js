@@ -1,5 +1,12 @@
 import mongoose from 'mongoose';
 
+const statusHistorySchema = new mongoose.Schema({
+    status: { type: String, enum: ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED']},
+    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    explanation: { type: String },
+    timestamp: { type: Date, default: Date.now },
+});
+
 const ComplaintSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },
@@ -8,13 +15,14 @@ const ComplaintSchema = new mongoose.Schema({
     priority: { type: String, enum: ['LOW', 'MEDIUM', 'HIGH','URGENT'], default: 'MEDIUM' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    status: { type: String, enum: ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'], default: 'SUBMITTED' }
+    status: { type: String, enum: ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'], default: 'SUBMITTED' },
+    statusHistory: { type: [statusHistorySchema], default: [] }, 
 }, {
     timestamps: {
         createdAt: 'created_at',
         updatedAt: 'updated_at'
-}
+    }
 });
 
-const Complaint= mongoose.model('Complaint',ComplaintSchema);
-export default Complaint
+const Complaint = mongoose.model('Complaint', ComplaintSchema);
+export default Complaint;

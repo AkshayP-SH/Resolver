@@ -59,9 +59,18 @@ router.put('/:id', async (req, res) => {
             return res.status(404).json({message:"Complaint not found"});
         }
         if(complaint.status === "RESOLVED" || complaint.status === "REJECTED"){
-            return res.status(400).json({message:"Complaint already resolved"});
+            return res.status(400).json({message:"Complaint already resolved/rejected"});
         }
-        const { title, description, status, priority, assignedTo } = req.body;
+        
+        const { title, description, status, priority, assignedTo, explanation } = req.body;
+
+        if (status && status !== complaint.status) {
+            complaint.statusHistory.push({
+                status: status,
+                changedBy: req.user._id,
+                explanation: explanation || '' 
+            });
+        }
 
         if (req.user.role === 'admin') {
             if (title) complaint.title = title;
@@ -72,21 +81,27 @@ router.put('/:id', async (req, res) => {
         } else if(req.user.role === 'staff'){
             if (status) complaint.status = status;
             if (assignedTo) complaint.assignedTo = req.user._id;
-        }else {
+        } else {
             if(complaint.createdBy.toString() !== req.user._id.toString()){
                 return res.status(403).json({message:"You are not authorized to update this complaint"});
             }
             if (title) complaint.title = title;
             if (description) complaint.description = description;
-
         }
-        const updated= await complaint.save();
-        const populated = await updated.populate('createdBy', 'name email role');
+        
+        const updated = await complaint.save();
+        
+        const populated = await updated.populate([
+            { path: 'createdBy', select: 'name email role' },
+            { path: 'assignedTo', select: 'name email role' },
+            { path: 'statusHistory.changedBy', select: 'name email role' }
+        ]);
+        
         res.json({ message: 'Complaint updated successfully', complaint: populated });
 
     } catch (error) {
         res.status(500).json({ message: 'Error updating complaint', error: error.message });
     }
-})
+});
 
 export default router;

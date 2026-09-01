@@ -129,3 +129,19 @@ export const getUsers = async (role) => {
     throw error;
   }
 };
+
+export const updateUser = async (userId, userData) => {
+  try {
+    const response = await fetch(`${API_URL}/api/users/${userId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(userData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to update user');
+    return data;
+  } catch (error) {
+    console.error('updateUser error:', error);
+    throw error;
+  }
+};
