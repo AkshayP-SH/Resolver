@@ -100,7 +100,7 @@ export default function NewComplaintForm({ onCreated }) {
             </div>
 
             <div className="flex justify-end pt-4 border-t border-base-300">
-              <button type="submit" className="btn btn-primary rounded-none min-w-[160px]" disabled={submitting}>
+              <button type="submit" className="btn btn-primary rounded-none min-w-40" disabled={submitting}>
                 {submitting ? <span className="loading loading-spinner loading-xs"></span> : 'Submit Complaint'}
               </button>
             </div>

@@ -118,7 +118,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
           </div>
 
           {/* Content Area */}
-          <div className="p-6 overflow-y-auto flex-grow bg-base-100">
+          <div className="p-6 overflow-y-auto grow bg-base-100">
             {error && <div className="alert alert-error rounded-none mb-4 text-sm py-2">{error}</div>}
 
             {activeTab === 'details' && (
