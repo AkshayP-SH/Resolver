@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📋 Resolver
+# Resolver
 ### Digital Complaint & Resolution Portal
 
 *A streamlined, forum-style issue tracking platform connecting users, support staff, and administrators.*
@@ -13,32 +13,32 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white)
 
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Local Setup](#-local-setup) • [Screenshots](#-screenshots)
+[Features](#-features) • [Tech Stack](#-tech-stack) • [Local Setup](#-local-setup)
 
 </div>
 
 ---
 
-## 🏢 About The Project
+## About The Project
 
 **Resolver** was developed during my internship at **Shnoor International** to solve the common problem of fragmented issue reporting. Traditional helpdesks often feel like "black holes" where users submit tickets and lose visibility into the resolution process. 
 
 Resolver introduces a transparent, GitHub Issues-inspired forum model. All complaints are visible system-wide, allowing users to collaborate, upvote common issues, and track exact status histories with staff explanations. It features strict Role-Based Access Control (RBAC) ensuring Users, Staff, and Admins have precisely the tools they need—nothing more, nothing less.
 
-## ✨ Features
+## Features
 
-### 👤 For Users (Citizens / Employees)
+### For Users (Citizens / Employees)
 * **Transparent Tracking:** View all system complaints and track the exact lifecycle of any issue.
-* **Collaboration:** Upvote ("Me Too") existing complaints to signal priority to administrators.
+* **Collaboration:** Upvote existing complaints to signal priority to administrators.
 * **Audit Trail:** View the complete Status History timeline, reading the exact explanations staff provided when moving a ticket to *In Progress* or *Resolved*.
 * **Ownership:** Edit or delete self-filed complaints (only while in the `SUBMITTED` state).
 
-### 🛠️ For Staff (Support Team)
+### For Staff (Support Team)
 * **Self-Assignment:** Browse the unassigned queue and claim tickets with a single click.
 * **Mandatory Accountability:** Changing a ticket's status to *In Progress*, *Resolved*, or *Rejected* triggers a mandatory explanation modal, ensuring transparent communication.
 * **Workload Management:** Dedicated dashboard views for "Assigned to Me" vs. "All Complaints".
 
-### 🛡️ For Admins (System Managers)
+### For Admins (System Managers)
 * **Global Overrides:** Reassign tickets to specific staff members, override priorities, and lock/unlock closed tickets.
 * **User Management:** View all registered users and promote/demote roles between User, Staff, and Admin.
 * **System Analytics:** High-level overview of pending, in-progress, and unassigned system load.
