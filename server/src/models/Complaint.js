@@ -17,6 +17,7 @@ const ComplaintSchema = new mongoose.Schema({
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'], default: 'SUBMITTED' },
     statusHistory: { type: [statusHistorySchema], default: [] }, 
+    upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, {
     timestamps: {
         createdAt: 'created_at',

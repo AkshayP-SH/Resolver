@@ -1,5 +1,6 @@
 import express from 'express';
 import Complaint from '../models/Complaint.js';
+import Comment from '../models/Comment.js';
 
 const router = express.Router();
 
@@ -104,4 +105,64 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+router.post('/:id/upvote', async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id);
+        if (!complaint) {
+            return res.status(404).json({ message: 'Complaint not found' });
+        }
+        const alreadyUpvoted = complaint.upvotes.some(
+            id => id.toString() === req.user._id.toString()
+        );
+
+        if (alreadyUpvoted) {
+            complaint.upvotes = complaint.upvotes.filter(
+                id => id.toString() !== req.user._id.toString()
+            );
+        } else {
+            complaint.upvotes.push(req.user._id);
+        }
+
+        await complaint.save();
+        res.json({ message: alreadyUpvoted ? 'Upvote removed' : 'Complaint upvoted', complaint });
+    } catch (error) {
+        res.status(500).json({ message: 'Error upvoting complaint', error: error.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id);
+
+        if (!complaint) {
+            return res.status(404).json({ message: 'Complaint not found' });
+        }
+
+        if (req.user.role === 'admin') {
+            await Comment.deleteMany({ complaint: req.params.id });
+            await Complaint.findByIdAndDelete(req.params.id);
+            return res.json({ message: 'Complaint deleted successfully' });
+        }
+
+        if (req.user.role === 'staff') {
+            return res.status(403).json({ message: 'Staff cannot delete complaints' });
+        }
+
+        if (req.user.role === 'user') {
+            const isOwner = complaint.createdBy.toString() === req.user._id.toString();
+            const canDelete = complaint.status === 'SUBMITTED' || complaint.status === 'REJECTED';
+
+            if (isOwner && canDelete) {
+                await Comment.deleteMany({ complaint: req.params.id });
+                await Complaint.findByIdAndDelete(req.params.id);
+                return res.json({ message: 'Complaint deleted successfully' });
+            }
+
+            return res.status(403).json({ message: 'You can only delete your own submitted/rejected complaints' });
+        }
+
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting complaint', error: error.message });
+    }
+});
 export default router;
