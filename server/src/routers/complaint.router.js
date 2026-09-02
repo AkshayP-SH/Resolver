@@ -54,22 +54,22 @@ router.get('/:id', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-    try{
+    try {
         const complaint = await Complaint.findById(req.params.id);
-        if(!complaint){
-            return res.status(404).json({message:"Complaint not found"});
+        if (!complaint) {
+            return res.status(404).json({ message: 'Complaint not found' });
         }
-        if(complaint.status === "RESOLVED" || complaint.status === "REJECTED"){
-            return res.status(400).json({message:"Complaint already resolved/rejected"});
+        if (complaint.status === 'RESOLVED' || complaint.status === 'REJECTED') {
+            return res.status(400).json({ message: 'Complaint already resolved/rejected' });
         }
-        
+
         const { title, description, status, priority, assignedTo, explanation } = req.body;
 
         if (status && status !== complaint.status) {
             complaint.statusHistory.push({
                 status: status,
                 changedBy: req.user._id,
-                explanation: explanation || '' 
+                explanation: explanation || ''
             });
         }
 
@@ -78,26 +78,46 @@ router.put('/:id', async (req, res) => {
             if (description) complaint.description = description;
             if (status) complaint.status = status;
             if (priority) complaint.priority = priority;
-            if (assignedTo) complaint.assignedTo = assignedTo;
-        } else if(req.user.role === 'staff'){
+            if (assignedTo) {
+                complaint.assignedTo = assignedTo;
+                if (complaint.status === 'SUBMITTED') {
+                    complaint.status = 'ASSIGNED';
+                    complaint.statusHistory.push({
+                        status: 'ASSIGNED',
+                        changedBy: req.user._id,
+                        explanation: 'Automatically assigned to staff'
+                    });
+                }
+            }
+        } else if (req.user.role === 'staff') {
             if (status) complaint.status = status;
-            if (assignedTo) complaint.assignedTo = req.user._id;
+            if (assignedTo) {
+                complaint.assignedTo = req.user._id;
+                if (complaint.status === 'SUBMITTED') {
+                    complaint.status = 'ASSIGNED';
+                    complaint.statusHistory.push({
+                        status: 'ASSIGNED',
+                        changedBy: req.user._id,
+                        explanation: 'Staff self-assigned'
+                    });
+                }
+            }
         } else {
-            if(complaint.createdBy.toString() !== req.user._id.toString()){
-                return res.status(403).json({message:"You are not authorized to update this complaint"});
+            if (complaint.createdBy.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: 'You are not authorized to update this complaint' });
             }
             if (title) complaint.title = title;
             if (description) complaint.description = description;
         }
-        
+
         const updated = await complaint.save();
-        
+
         const populated = await updated.populate([
             { path: 'createdBy', select: 'name email role' },
             { path: 'assignedTo', select: 'name email role' },
             { path: 'statusHistory.changedBy', select: 'name email role' }
         ]);
-        
+
         res.json({ message: 'Complaint updated successfully', complaint: populated });
 
     } catch (error) {
