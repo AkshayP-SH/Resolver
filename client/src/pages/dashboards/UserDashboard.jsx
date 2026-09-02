@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { getComplaints } from '../../services/api';
 import ComplaintDetailModal from '../../components/ComplaintDetailModal';
-import NewComplaintForm from '../../components/NewComplaintForm'; // IMPORTED SHARED FORM
+import NewComplaintForm from '../../components/NewComplaintForm';
 
 export default function UserDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -214,7 +214,7 @@ function DashboardOverview({ complaints, user, onSelectComplaint }) {
   const total = complaints.length;
   const pending = complaints.filter(c => c.status === 'SUBMITTED').length;
   const inProgress = complaints.filter(c => c.status === 'IN_PROGRESS').length;
-  const resolved = complaints.filter(c => c.status === 'RESOLVED' || c.status === 'CLOSED').length;
+  const resolved = complaints.filter(c => c.status === 'RESOLVED' || c.status === 'REJECTED').length;
 
   return (
     <div>

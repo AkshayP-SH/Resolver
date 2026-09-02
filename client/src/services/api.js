@@ -145,3 +145,33 @@ export const updateUser = async (userId, userData) => {
     throw error;
   }
 };
+
+export const deleteComplaint = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/api/complaints/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to delete complaint');
+    return data;
+  } catch (error) {
+    console.error('deleteComplaint error:', error);
+    throw error;
+  }
+};
+
+export const upvoteComplaint = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/api/complaints/${id}/upvote`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to upvote');
+    return data;
+  } catch (error) {
+    console.error('upvoteComplaint error:', error);
+    throw error;
+  }
+};
