@@ -3,6 +3,7 @@ import Sidebar from '../../components/Sidebar';
 import { getComplaints, createComplaint, updateComplaint } from '../../services/api';
 import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
+import FilterBar from '../../components/FilterBar';
 
 export default function StaffDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -67,8 +68,6 @@ export default function StaffDashboard() {
       case 'all-complaints':
         return (
           <AllComplaintsView 
-            complaints={complaints} 
-            loading={loading} 
             onAssign={handleAssignToMe}
             showAssignButton={true}
             onSelectComplaint={setSelectedComplaint}
@@ -226,15 +225,36 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint }) {
   );
 }
 
-function AllComplaintsView({ complaints, loading, onAssign, showAssignButton, onSelectComplaint }) {
-  if (loading) return <div className="text-center py-12">Loading...</div>;
+function AllComplaintsView({ onAssign, onSelectComplaint }) {
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({});
+
+  useEffect(() => {
+    const fetchFiltered = async () => {
+      try {
+        setLoading(true);
+        const data = await getComplaints(filters);
+        setComplaints(Array.isArray(data) ? data : (data.complaints || []));
+      } catch (error) {
+        console.error('Failed to fetch complaints:', error);
+        setComplaints([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFiltered();
+  }, [filters]);
 
   return (
     <div>
       <h1 className="text-3xl font-black mb-6">All Complaints</h1>
+      <FilterBar onFilterChange={setFilters} />
       <div className="card bg-base-100 shadow-sm rounded-none">
         <div className="card-body">
-          {complaints.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">Loading...</div>
+          ) : complaints.length === 0 ? (
             <p className="text-center py-8 text-base-content/60">No complaints found.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -247,7 +267,7 @@ function AllComplaintsView({ complaints, loading, onAssign, showAssignButton, on
                     <th>Priority</th>
                     <th>Filed By</th>
                     <th>Assigned To</th>
-                    {showAssignButton && <th>Action</th>}
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -258,27 +278,21 @@ function AllComplaintsView({ complaints, loading, onAssign, showAssignButton, on
                       <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
                       <td>
                         <span className={`badge rounded-none ${
-                          complaint.priority === 'URGENT' ? 'badge-error' :
-                          complaint.priority === 'HIGH' ? 'badge-warning' :
-                          'badge-ghost'
-                        }`}>
-                          {complaint.priority}
-                        </span>
+                          complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'
+                        }`}>{complaint.priority}</span>
                       </td>
                       <td>{complaint.createdBy?.name || 'Unknown'}</td>
                       <td>{complaint.assignedTo?.name || 'Unassigned'}</td>
-                      {showAssignButton && (
-                        <td>
-                          {!complaint.assignedTo && (
-                            <button 
-                              className="btn btn-primary btn-xs rounded-none"
-                              onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}
-                            >
-                              Assign to Me
-                            </button>
-                          )}
-                        </td>
-                      )}
+                      <td>
+                        {!complaint.assignedTo && (
+                          <button 
+                            className="btn btn-primary btn-xs rounded-none"
+                            onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}
+                          >
+                            Assign to Me
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

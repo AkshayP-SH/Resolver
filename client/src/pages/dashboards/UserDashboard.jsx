@@ -3,6 +3,7 @@ import Sidebar from '../../components/Sidebar';
 import { getComplaints } from '../../services/api';
 import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
+import FilterBar from '../../components/FilterBar';
 
 export default function UserDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,7 +47,7 @@ export default function UserDashboard() {
   const renderPage = () => {
     switch (currentPage) {
       case 'all-complaints':
-        return <AllComplaintsView complaints={complaints} loading={loading} onSelectComplaint={setSelectedComplaint} />;
+        return <AllComplaintsView onSelectComplaint={setSelectedComplaint} />;
       case 'my-complaints':
         return <MyComplaintsView complaints={myComplaints} loading={loading} onSelectComplaint={setSelectedComplaint} />;
       case 'new-complaint':
@@ -112,15 +113,36 @@ export default function UserDashboard() {
   );
 }
 
-function AllComplaintsView({ complaints, loading, onSelectComplaint }) {
-  if (loading) return <div className="text-center py-12">Loading...</div>;
+function AllComplaintsView({ onSelectComplaint }) {
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({});
+
+  useEffect(() => {
+    const fetchFiltered = async () => {
+      try {
+        setLoading(true);
+        const data = await getComplaints(filters);
+        setComplaints(Array.isArray(data) ? data : (data.complaints || []));
+      } catch (error) {
+        console.error('Failed to fetch complaints:', error);
+        setComplaints([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFiltered();
+  }, [filters]);
 
   return (
     <div>
       <h1 className="text-3xl font-black mb-6">All Complaints</h1>
+      <FilterBar onFilterChange={setFilters} />
       <div className="card bg-base-100 shadow-sm rounded-none">
         <div className="card-body">
-          {complaints.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">Loading...</div>
+          ) : complaints.length === 0 ? (
             <p className="text-center py-8 text-base-content/60">No complaints found.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -143,9 +165,7 @@ function AllComplaintsView({ complaints, loading, onSelectComplaint }) {
                       <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
                       <td>
                         <span className={`badge rounded-none ${
-                          complaint.priority === 'URGENT' ? 'badge-error' :
-                          complaint.priority === 'HIGH' ? 'badge-warning' :
-                          'badge-ghost'
+                          complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'
                         }`}>{complaint.priority}</span>
                       </td>
                       <td>{complaint.createdBy?.name || 'Unknown'}</td>
