@@ -29,41 +29,34 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const { status, category, search, sort, mine } = req.query;
-
-        // Build filter object
         const filter = {};
 
-        if (status) {
-            filter.status = status;
-        }
-
-        if (category) {
-            filter.category = category;
-        }
-
+        if (status) filter.status = status;
+        if (category) filter.category = category;
         if (search) {
             filter.$or = [
                 { title: { $regex: search, $options: 'i' } },
                 { description: { $regex: search, $options: 'i' } }
             ];
         }
+        if (mine === 'true') filter.createdBy = req.user._id;
 
-        if (mine === 'true') {
-            filter.createdBy = req.user._id;
-        }
-
-        // Determine sort order
-        let sortOrder = { created_at: -1 }; // default: newest first
-        if (sort === 'oldest') {
-            sortOrder = { created_at: 1 };
-        } else if (sort === 'priority') {
-            sortOrder = { priority: 1 };
-        }
-
-        const complaints = await Complaint.find(filter)
+        let query = Complaint.find(filter)
             .populate('createdBy', 'name email role')
-            .populate('assignedTo', 'name email role')
-            .sort(sortOrder);
+            .populate('assignedTo', 'name email role');
+
+        if (sort === 'oldest') {
+            query = query.sort({ created_at: 1 });
+        } else {
+            query = query.sort({ created_at: -1 });
+        }
+
+        let complaints = await query;
+
+        if (sort === 'priority') {
+            const rank = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+            complaints = complaints.sort((a, b) => (rank[a.priority] ?? 99) - (rank[b.priority] ?? 99));
+        }
 
         res.json({ complaints });
     } catch (error) {

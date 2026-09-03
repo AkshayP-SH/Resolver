@@ -4,6 +4,7 @@ import { getComplaints, getUsers } from '../../services/api';
 import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
 import UserDetailModal from '../../components/UserDetailModal';
+import FilterBar from '../../components/FilterBar';
 
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -55,7 +56,7 @@ export default function AdminDashboard() {
   const renderPage = () => {
     switch (currentPage) {
       case 'overview': return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} />;
-      case 'all-complaints': return <AdminAllComplaints complaints={complaints} loading={loading} onSelectComplaint={setSelectedComplaint} />;
+      case 'all-complaints': return <AdminAllComplaints onSelectComplaint={setSelectedComplaint} />;
       case 'new-complaint': return <NewComplaintForm onCreated={fetchComplaints} />;
       case 'user-management': return <UserManagementView users={users} loading={loadingUsers} onSelectUser={setSelectedUser} />;
       default: return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} />;
@@ -133,15 +134,39 @@ function AdminOverview({ complaints, user, onSelectComplaint }) {
   );
 }
 
-function AdminAllComplaints({ complaints, loading, onSelectComplaint }) {
-  if (loading) return <div className="text-center py-12">Loading...</div>;
+
+function AdminAllComplaints({ onSelectComplaint }) {
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({});
+
+  useEffect(() => {
+    const fetchFiltered = async () => {
+      try {
+        setLoading(true);
+        const data = await getComplaints(filters);
+        setComplaints(Array.isArray(data) ? data : (data.complaints || []));
+      } catch (error) {
+        console.error('Failed to fetch complaints:', error);
+        setComplaints([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFiltered();
+  }, [filters]);
 
   return (
     <div>
       <h1 className="text-3xl font-black mb-6">All Complaints</h1>
+      <FilterBar onFilterChange={setFilters} />
       <div className="card bg-base-100 shadow-sm rounded-none">
         <div className="card-body">
-          {complaints.length === 0 ? <p className="text-center py-8 text-base-content/60">No complaints found.</p> : (
+          {loading ? (
+          <div className="text-center py-12">Loading...</div>
+        ) : complaints.length === 0 ? (
+            <p className="text-center py-8 text-base-content/60">No complaints found.</p>
+          ) : (
             <div className="overflow-x-auto">
               <table className="table w-full">
                 <thead>

@@ -7,23 +7,29 @@ const getHeaders = () => ({
     'Authorization': `Bearer ${getToken()}`,
 });
 
-export const getComplaints = async () => {
-    try{
-        const response = await fetch(`${API_URL}/api/complaints`, {
-            method: 'GET',
-            headers: getHeaders(),
-        });
-        const data = await response.json();
-        if(!response.ok){
-            throw new Error(data.message || 'Something went wrong with getting complaints');
+export const getComplaints = async (filters = {}) => {
+  try {
+    const params = new URLSearchParams();
+    if (filters.status) params.append('status', filters.status);
+    if (filters.category) params.append('category', filters.category);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.sort) params.append('sort', filters.sort);
+    if (filters.mine) params.append('mine', 'true');
 
-        }
-        return data;
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
+    const queryString = params.toString();
+    const url = queryString 
+      ? `${API_URL}/api/complaints?${queryString}` 
+      : `${API_URL}/api/complaints`;
+
+    const response = await fetch(url, { headers: getHeaders() });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to fetch complaints');
+    return data;
+  } catch (error) {
+    console.error('getComplaints error:', error);
+    throw error;
+  }
+};
 
 export const getComplaintById = async (id) => {
     try{
