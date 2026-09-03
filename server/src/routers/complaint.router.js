@@ -27,17 +27,49 @@ router.post('/', async (req, res) => {
 })
 
 router.get('/', async (req, res) => {
-    try{
-        if (req.query.mine === 'true') {
+    try {
+        const { status, category, search, sort, mine } = req.query;
+
+        // Build filter object
+        const filter = {};
+
+        if (status) {
+            filter.status = status;
+        }
+
+        if (category) {
+            filter.category = category;
+        }
+
+        if (search) {
+            filter.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        if (mine === 'true') {
             filter.createdBy = req.user._id;
         }
-        const complaints = await Complaint.find().populate('createdBy', 'name email role').populate('assignedTo', 'name email role').sort({ created_at: -1 });
 
-        res.json({complaints});
+        // Determine sort order
+        let sortOrder = { created_at: -1 }; // default: newest first
+        if (sort === 'oldest') {
+            sortOrder = { created_at: 1 };
+        } else if (sort === 'priority') {
+            sortOrder = { priority: 1 };
+        }
+
+        const complaints = await Complaint.find(filter)
+            .populate('createdBy', 'name email role')
+            .populate('assignedTo', 'name email role')
+            .sort(sortOrder);
+
+        res.json({ complaints });
     } catch (error) {
-        res.status(500).json({message:"complaints not gound error",error});
+        res.status(500).json({ message: 'Error fetching complaints', error: error.message });
     }
-})
+});
 
 router.get('/:id', async (req, res) => {
   try {
