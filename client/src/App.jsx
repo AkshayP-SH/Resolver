@@ -6,7 +6,8 @@ import Dashboard from './pages/Dashboard.jsx'
 import Landing from './pages/Landing.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
-//import './App.css' replace with tailwind
+import Profile from './pages/Profile.jsx'
+import './App.css'
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile/>} />
           </Route>
         </Routes>
       </BrowserRouter>

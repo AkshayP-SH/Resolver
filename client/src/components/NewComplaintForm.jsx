@@ -40,7 +40,6 @@ export default function NewComplaintForm({ onCreated }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* Left Column: Asymmetric Context & Guidelines */}
       <div className="lg:col-span-4 flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-black tracking-tight mb-2">File a Complaint</h1>
@@ -60,7 +59,6 @@ export default function NewComplaintForm({ onCreated }) {
         </div>
       </div>
 
-      {/* Right Column: The Form */}
       <div className="lg:col-span-8">
         {success && <div className="alert alert-success rounded-none mb-4 border-0"><span>Complaint filed successfully!</span></div>}
         {error && <div className="alert alert-error rounded-none mb-4 border-0"><span>{error}</span></div>}

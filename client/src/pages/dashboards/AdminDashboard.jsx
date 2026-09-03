@@ -5,6 +5,7 @@ import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
 import UserDetailModal from '../../components/UserDetailModal';
 import FilterBar from '../../components/FilterBar';
+import { Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);

@@ -181,3 +181,35 @@ export const upvoteComplaint = async (id) => {
     throw error;
   }
 };
+
+export const getMyProfile = async () => {
+  try {
+    const response = await fetch(`${API_URL}/api/users/me`, { headers: getHeaders() });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to fetch profile');
+    return data;
+  } catch (error) {
+    console.error('getMyProfile error:', error);
+    throw error;
+  }
+};
+
+export const updateMyProfile = async (profileData) => {
+  try {
+    const response = await fetch(`${API_URL}/api/users/me`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to update profile');
+    
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    localStorage.setItem('user', JSON.stringify({ ...currentUser, name: data.name }));
+    
+    return data;
+  } catch (error) {
+    console.error('updateMyProfile error:', error);
+    throw error;
+  }
+};

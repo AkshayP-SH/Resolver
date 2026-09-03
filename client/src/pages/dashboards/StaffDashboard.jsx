@@ -4,6 +4,7 @@ import { getComplaints, createComplaint, updateComplaint } from '../../services/
 import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
 import FilterBar from '../../components/FilterBar';
+import { Link } from 'react-router-dom';
 
 export default function StaffDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);

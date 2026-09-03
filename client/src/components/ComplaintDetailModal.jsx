@@ -131,7 +131,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
     <>
       <dialog className="modal modal-open">
         <div className="modal-box w-11/12 max-w-4xl rounded-none border border-base-300 p-0 flex flex-col max-h-[90vh]">
-          {/* Header */}
           <div className="flex items-center justify-between border-b border-base-300 p-6 bg-base-200/30 gap-4">
             <div className="flex flex-col gap-1 flex-1 min-w-0">
               <div className="flex items-center gap-3">
@@ -160,13 +159,12 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                 className={`btn btn-sm rounded-none gap-1 ${hasUpvoted ? 'btn-primary' : 'btn-ghost border-base-300'}`}
                 title="Me Too"
               >
-                👍 <span className="font-bold">{complaint.upvotes?.length || 0}</span>
+                👍 <span className="font-bold">{complaint.upvotes?.length || 0}</span> {/* chqnge this to some svg */}
               </button>
               <button onClick={onClose} className="btn btn-sm btn-ghost btn-square rounded-none">✕</button>
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="tabs tabs-bordered px-6 bg-base-200/10">
             <a className={`tab rounded-none ${activeTab === 'details' ? 'tab-active font-bold' : ''}`} onClick={() => setActiveTab('details')}>Details</a>
             <a className={`tab rounded-none ${activeTab === 'comments' ? 'tab-active font-bold' : ''}`} onClick={() => setActiveTab('comments')}>
@@ -174,7 +172,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
             </a>
           </div>
 
-          {/* Content */}
           <div className="p-6 overflow-y-auto grow bg-base-100">
             {error && <div className="alert alert-error rounded-none mb-4 text-sm py-2">{error}</div>}
 
@@ -187,7 +184,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                   <div className="flex flex-col gap-1"><span className="text-xs uppercase font-bold text-base-content/50 tracking-wider">Last Updated</span><span className="text-sm font-medium">{formatDate(complaint.updated_at)}</span></div>
                 </div>
 
-                {/* Description / Edit */}
                 <div className="flex flex-col gap-2">
                   <span className="text-xs uppercase font-bold text-base-content/50 tracking-wider">Description</span>
                   {isEditing ? (
@@ -201,7 +197,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                   )}
                 </div>
 
-                {/* Admin/Staff Controls */}
                 {!isEditing && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-base-300">
                     <div className="flex flex-col gap-2">
@@ -239,7 +234,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                   </div>
                 )}
 
-                {/* Status History Timeline */}
                 {complaint.statusHistory && complaint.statusHistory.length > 0 && !isEditing && (
                   <div className="pt-6 border-t border-base-300">
                     <h4 className="text-xs uppercase font-bold text-base-content/50 tracking-wider mb-4">Status History</h4>
@@ -261,7 +255,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                   </div>
                 )}
 
-                {/* Edit / Delete Buttons */}
                 <div className="flex flex-wrap gap-3 pt-4 border-t border-base-300">
                   {isCreator && isSubmitted && !isEditing && (
                     <button onClick={() => setIsEditing(true)} className="btn btn-sm btn-outline rounded-none">Edit Complaint</button>
@@ -277,7 +270,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                   )}
                 </div>
 
-                {/* Delete Confirmation */}
                 {showDeleteConfirm && (
                   <div className="alert alert-error rounded-none flex flex-col items-start gap-2 border-2">
                     <span className="font-bold">Are you sure you want to delete this complaint?</span>
