@@ -5,6 +5,8 @@ import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
 import FilterBar from '../../components/FilterBar';
 import { Link } from 'react-router-dom';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { showToast } from '../../services/toast';
 
 export default function UserDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -15,7 +17,6 @@ export default function UserDashboard() {
 
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // added sharp svgs to the menu items for the rail
   const menuItems = [
     { 
       id: 'overview', label: 'Overview', 
@@ -35,7 +36,6 @@ export default function UserDashboard() {
     },
   ];
 
-  // dynamically grabs the page title for the top nav
   const currentPageTitle = menuItems.find(i => i.id === currentPage)?.label || 'Dashboard';
 
   useEffect(() => { fetchComplaints(); }, []);
@@ -43,7 +43,8 @@ export default function UserDashboard() {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const data = await getComplaints();
+      // limit 1000 so overview stats + my complaints get everything
+      const data = await getComplaints({ limit: 1000 });
       setComplaints(Array.isArray(data) ? data : (data.complaints || []));
     } catch (error) {
       console.error('Failed to fetch complaints:', error);
@@ -64,9 +65,7 @@ export default function UserDashboard() {
   };
 
   return (
-    // added md:pl-16 to push content away from the persistent rail
     <div className="min-h-screen bg-base-200 md:pl-16 transition-all duration-300">
-      
       <Sidebar
         menuItems={menuItems}
         currentPage={currentPage}
@@ -75,18 +74,14 @@ export default function UserDashboard() {
         onMobileClose={() => setMobileMenuOpen(false)}
       />
 
-      {/* TOP NAV */}
       <nav className="sticky top-0 z-30 navbar bg-base-200/95 backdrop-blur-sm border-b border-base-300 px-4 md:px-8 py-4">
         <div className="flex-1 flex items-center gap-4">
-          {/* hamburger only shows on mobile */}
           <button 
             onClick={() => setMobileMenuOpen(true)}
             className="btn btn-ghost btn-sm btn-square rounded-none md:hidden"
           >
             <svg fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
           </button>
-          
-          {/* dynamic page title */}
           <h1 className="text-xl md:text-2xl font-black tracking-tight text-base-content uppercase">
             {currentPageTitle}
           </h1>
@@ -120,7 +115,6 @@ export default function UserDashboard() {
         </div>
       </nav>
 
-      {/* MAIN CONTENT */}
       <main className="p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {renderPage()}
@@ -138,26 +132,30 @@ export default function UserDashboard() {
   );
 }
 
-// --- inner views remain exactly the same so nothing breaks ---
-
+// server-side pagination for all complaints
 function AllComplaintsView({ onSelectComplaint }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1 });
+
+  useEffect(() => { setPage(1); }, [filters]);
 
   useEffect(() => {
     const fetchFiltered = async () => {
       try {
         setLoading(true);
-        const data = await getComplaints(filters);
+        const data = await getComplaints({ ...filters, page, limit: 10 });
         setComplaints(Array.isArray(data) ? data : (data.complaints || []));
+        if (data.pagination) setPagination(data.pagination);
       } catch (error) {
         console.error('Failed to fetch complaints:', error);
         setComplaints([]);
       } finally { setLoading(false); }
     };
     fetchFiltered();
-  }, [filters]);
+  }, [filters, page]);
 
   return (
     <div>
@@ -165,36 +163,39 @@ function AllComplaintsView({ onSelectComplaint }) {
       <div className="card bg-base-100 shadow-sm rounded-none border border-base-300">
         <div className="card-body p-0">
           {loading ? (
-            <div className="text-center py-12 text-base-content/50 font-semibold">Loading...</div>
+            <LoadingSpinner />
           ) : complaints.length === 0 ? (
             <p className="text-center py-12 text-base-content/50 font-semibold">No complaints found.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="table w-full">
-                <thead className="bg-base-200/50 border-b border-base-300">
-                  <tr>
-                    <th className="rounded-none uppercase text-[11px] tracking-widest text-base-content/60">Title</th>
-                    <th className="uppercase text-[11px] tracking-widest text-base-content/60">Category</th>
-                    <th className="uppercase text-[11px] tracking-widest text-base-content/60">Status</th>
-                    <th className="uppercase text-[11px] tracking-widest text-base-content/60">Priority</th>
-                    <th className="uppercase text-[11px] tracking-widest text-base-content/60">Filed By</th>
-                    <th className="uppercase text-[11px] tracking-widest text-base-content/60">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {complaints.map((complaint) => (
-                    <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                      <td className="font-semibold">{complaint.title}</td>
-                      <td>{complaint.category}</td>
-                      <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                      <td><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                      <td>{complaint.createdBy?.name || 'Unknown'}</td>
-                      <td>{new Date(complaint.created_at).toLocaleDateString()}</td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="table w-full">
+                  <thead className="bg-base-200/50 border-b border-base-300">
+                    <tr>
+                      <th className="rounded-none uppercase text-[11px] tracking-widest text-base-content/60">Title</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Category</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Status</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Priority</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Filed By</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Date</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {complaints.map((complaint) => (
+                      <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
+                        <td className="font-semibold">{complaint.title}</td>
+                        <td>{complaint.category}</td>
+                        <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                        <td><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                        <td>{complaint.createdBy?.name || 'Unknown'}</td>
+                        <td>{new Date(complaint.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <PaginationFooter page={pagination.page} totalPages={pagination.totalPages} total={pagination.total} onPageChange={setPage} />
+            </>
           )}
         </div>
       </div>
@@ -202,40 +203,75 @@ function AllComplaintsView({ onSelectComplaint }) {
   );
 }
 
+// client-side filtering + pagination for my complaints
 function MyComplaintsView({ complaints, loading, onSelectComplaint }) {
-  if (loading) return <div className="text-center py-12 text-base-content/50 font-semibold">Loading...</div>;
+  const [filters, setFilters] = useState({});
+  const [page, setPage] = useState(1);
+  const LIMIT = 10;
+
+  useEffect(() => { setPage(1); }, [filters]);
+
+  if (loading) return <LoadingSpinner />;
+
+  const filtered = complaints.filter((c) => {
+    if (filters.status && c.status !== filters.status) return false;
+    if (filters.category && c.category !== filters.category) return false;
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      if (!c.title.toLowerCase().includes(s) && !(c.description || '').toLowerCase().includes(s)) return false;
+    }
+    return true;
+  });
+
+  let sorted = [...filtered];
+  if (filters.sort === 'oldest') sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  else if (filters.sort === 'priority') {
+    const rank = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+    sorted.sort((a, b) => (rank[a.priority] ?? 99) - (rank[b.priority] ?? 99));
+  } else sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / LIMIT));
+  const paged = sorted.slice((page - 1) * LIMIT, page * LIMIT);
 
   return (
-    <div className="card bg-base-100 shadow-sm rounded-none border border-base-300">
-      <div className="card-body p-0">
-        {complaints.length === 0 ? (
-          <p className="text-center py-12 text-base-content/50 font-semibold">You haven't filed any complaints yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="table w-full">
-              <thead className="bg-base-200/50 border-b border-base-300">
-                <tr>
-                  <th className="rounded-none uppercase text-[11px] tracking-widest text-base-content/60">Title</th>
-                  <th className="uppercase text-[11px] tracking-widest text-base-content/60">Category</th>
-                  <th className="uppercase text-[11px] tracking-widest text-base-content/60">Status</th>
-                  <th className="uppercase text-[11px] tracking-widest text-base-content/60">Priority</th>
-                  <th className="uppercase text-[11px] tracking-widest text-base-content/60">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {complaints.map((complaint) => (
-                  <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                    <td className="font-semibold">{complaint.title}</td>
-                    <td>{complaint.category}</td>
-                    <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                    <td><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                    <td>{new Date(complaint.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+    <div>
+      <FilterBar onFilterChange={setFilters} />
+      <div className="card bg-base-100 shadow-sm rounded-none border border-base-300">
+        <div className="card-body p-0">
+          {complaints.length === 0 ? (
+            <p className="text-center py-12 text-base-content/50 font-semibold">You haven't filed any complaints yet.</p>
+          ) : paged.length === 0 ? (
+            <p className="text-center py-12 text-base-content/50 font-semibold">No complaints match your filters.</p>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="table w-full">
+                  <thead className="bg-base-200/50 border-b border-base-300">
+                    <tr>
+                      <th className="rounded-none uppercase text-[11px] tracking-widest text-base-content/60">Title</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Category</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Status</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Priority</th>
+                      <th className="uppercase text-[11px] tracking-widest text-base-content/60">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paged.map((complaint) => (
+                      <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
+                        <td className="font-semibold">{complaint.title}</td>
+                        <td>{complaint.category}</td>
+                        <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                        <td><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                        <td>{new Date(complaint.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <PaginationFooter page={page} totalPages={totalPages} total={sorted.length} onPageChange={setPage} />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -285,6 +321,34 @@ function DashboardOverview({ complaints, user, onSelectComplaint }) {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PaginationFooter({ page, totalPages, total, onPageChange }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t border-base-300 bg-base-200/30">
+      <span className="text-xs font-semibold uppercase tracking-widest text-base-content/50">
+        Page {page} of {totalPages} · {total} total
+      </span>
+      <div className="flex gap-2">
+        <button
+          disabled={page <= 1}
+          onClick={() => onPageChange(page - 1)}
+          className="btn btn-ghost btn-sm rounded-none disabled:opacity-30"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+          Prev
+        </button>
+        <button
+          disabled={page >= totalPages}
+          onClick={() => onPageChange(page + 1)}
+          className="btn btn-ghost btn-sm rounded-none disabled:opacity-30"
+        >
+          Next
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+        </button>
       </div>
     </div>
   );
