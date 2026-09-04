@@ -1,5 +1,7 @@
 import express from 'express';
 import Complaint from '../models/Complaint.js';
+import mongoose from 'mongoose';
+
 
 const router = express.Router();
 
@@ -21,6 +23,25 @@ router.get('/stats', async (req, res) => {
     res.json({ totalResolved, avgTimeHours });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/health', async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState;
+    const isDbConnected = dbState === 1;
+
+    res.json({
+      status: isDbConnected ? 'operational' : 'degraded',
+      database: isDbConnected ? 'connected' : 'disconnected',
+      server: 'running'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'down',
+      database: 'error',
+      server: 'error'
+    });
   }
 });
 

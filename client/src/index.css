@@ -9,7 +9,6 @@
               border-color 0.3s ease;
 }
 
-/* trying it out */ 
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -31,3 +30,16 @@
 .delay-3 { animation-delay: 0.3s; }
 .delay-4 { animation-delay: 0.4s; }
 .delay-5 { animation-delay: 0.5s; }
+
+button, a, .card, .border {
+  transition: all 0.2s ease;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}

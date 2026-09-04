@@ -67,17 +67,54 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-base-200">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} menuItems={menuItems} currentPage={currentPage} onPageChange={setCurrentPage} />
-      <nav className="navbar bg-base-100 shadow-sm px-8 py-4">
-        <div className="flex-1 flex items-center gap-4">
-          <button onClick={() => setSidebarOpen(true)} className="btn btn-ghost btn-square rounded-none">☰</button>
-          <span className="text-xl font-bold">Admin Dashboard</span>
-          <span className="badge badge-error rounded-none">ADMIN</span>
-        </div>
-        <div className="flex-none flex items-center gap-4">
-          <span className="text-sm text-base-content/60">{user.name || user.email}</span>
-          <button className="btn btn-outline btn-sm rounded-none" onClick={() => { localStorage.clear(); window.location.href = '/'; }}>Logout</button>
-        </div>
-      </nav>
+      <nav className="navbar bg-base-100 border-b border-base-300 px-8 py-4">
+            <div className="flex-1 flex items-center gap-4">
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className="btn btn-ghost btn-square rounded-none"
+              >
+                ☰
+              </button>
+              <span className="text-2xl font-black tracking-tighter">RESOLVER</span>
+            </div>
+            
+            <div className="flex-none flex items-center gap-4">
+              <div className="dropdown dropdown-end">
+                <div tabIndex={0} role="button" className="btn btn-ghost btn-sm rounded-none flex items-center gap-2 h-auto py-2">
+                  <span className="text-sm font-medium">{user.name || user.email}</span>
+                  <svg className="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-none w-56 border border-base-300 z-50 mt-2">
+                  <li className="menu-title px-4 py-2">
+                    <span className="text-[10px] uppercase tracking-widest text-base-content/50 font-bold">Signed in as</span>
+                    <span className={`badge badge-sm rounded-none mt-1 ${
+                      user.role === 'admin' ? 'badge-error' : 
+                      user.role === 'staff' ? 'badge-warning' : 'badge-ghost'
+                    }`}>
+                      {user.role.toUpperCase()}
+                    </span>
+                  </li>
+                  <li>
+                    <Link to="/profile" className="font-medium">Manage Profile</Link>
+                  </li>
+                  <div className="divider my-0"></div>
+                  <li>
+                    <button 
+                      className="text-error"
+                      onClick={() => { 
+                        localStorage.clear(); 
+                        window.location.href = '/'; 
+                      }}
+                    >
+                      Logout
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
 
       <main className="p-8">
         <div className="max-w-6xl mx-auto">{renderPage()}</div>

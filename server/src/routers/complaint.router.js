@@ -28,7 +28,7 @@
 
     router.get('/', async (req, res) => {
         try {
-            const { status, category, search, sort, mine } = req.query;
+            const { status, category, search, sort, mine, page, limit } = req.query;
             const filter = {};
 
             if (status) filter.status = status;
@@ -41,6 +41,10 @@
             }
             if (mine === 'true') filter.createdBy = req.user._id;
 
+            const pageNum = parseInt(page) || 1;
+            const limitNum = parseInt(limit) || 10;
+            const skip = (pageNum - 1) * limitNum;
+
             let query = Complaint.find(filter)
                 .populate('createdBy', 'name email role')
                 .populate('assignedTo', 'name email role');
@@ -51,14 +55,31 @@
                 query = query.sort({ created_at: -1 });
             }
 
-            let complaints = await query;
+            const total = await Complaint.countDocuments(filter);
+            let complaints = await query.skip(skip).limit(limitNum);
+            let finalTotal = total;
 
             if (sort === 'priority') {
+                const allComplaints = await Complaint.find(filter)
+                    .populate('createdBy', 'name email role')
+                    .populate('assignedTo', 'name email role');
+                
                 const rank = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-                complaints = complaints.sort((a, b) => (rank[a.priority] ?? 99) - (rank[b.priority] ?? 99));
+                const sorted = allComplaints.sort((a, b) => (rank[a.priority] ?? 99) - (rank[b.priority] ?? 99));
+                
+                complaints = sorted.slice(skip, skip + limitNum);
+                finalTotal = sorted.length;
             }
 
-            res.json({ complaints });
+            res.json({ 
+                complaints,
+                pagination: {
+                    total: finalTotal,
+                    page: pageNum,
+                    limit: limitNum,
+                    totalPages: Math.ceil(finalTotal / limitNum)
+                }
+            });
         } catch (error) {
             res.status(500).json({ message: 'Error fetching complaints', error: error.message });
         }

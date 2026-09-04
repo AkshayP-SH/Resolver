@@ -15,6 +15,8 @@ export const getComplaints = async (filters = {}) => {
     if (filters.search) params.append('search', filters.search);
     if (filters.sort) params.append('sort', filters.sort);
     if (filters.mine) params.append('mine', 'true');
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit);
 
     const queryString = params.toString();
     const url = queryString 

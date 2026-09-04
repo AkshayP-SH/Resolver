@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
+import AuthShowcase from '../components/AuthShowcase';
+import { showToast } from '../services/toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -23,97 +24,102 @@ export default function Login() {
       });
       
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      if (!res.ok) throw new Error(data.message || 'Login failed');
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user || { email, role: data.role }));
-
+      
+      showToast('Welcome back!', 'success');
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      showToast(err.message, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-base-200 flex flex-col">
-      <nav className="navbar bg-base-100 shadow-sm px-8 py-4">
-        <div className="flex-1">
-          <Link 
-            to="/" 
-            className="btn btn-ghost text-2xl font-black tracking-tighter rounded-none p-0"
-          >
-            RESOLVER
+    <div className="min-h-screen bg-base-200 grid grid-cols-1 lg:grid-cols-[3fr_2fr] xl:grid-cols-[7fr_3fr]">
+      
+      <AuthShowcase />
+
+      {/* RIGHT PANEL: form */}
+      <div className="flex flex-col min-h-screen">
+        <nav className="flex justify-between items-center px-8 py-4 bg-base-200">
+          <Link to="/" className="lg:hidden flex items-center gap-2">
+            <img src="/favicon.svg" alt="Resolver" className="w-6 h-6" />
+            <span className="text-xl font-black tracking-tighter">RESOLVER</span>
           </Link>
-        </div>
-        <div className="flex-none">
-          <ThemeToggle />
-        </div>
-      </nav>
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
+        </nav>
 
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="card bg-base-100 w-full max-w-md shadow-lg rounded-none">
-          <div className="card-body">
-            <h2 className="card-title text-3xl font-black tracking-tight">Sign In</h2>
-            <p className="text-base-content/60 mb-6">Enter your credentials to continue</p>
+        <main className="flex-1 flex items-center justify-center px-6 xl:px-8 py-8">
+          <div className="w-full max-w-md space-y-8">
+            
+            <div className="animate-fade-in-up">
+              <h1 className="text-4xl font-black tracking-tight">Sign In</h1>
+              <p className="text-base-content/60 mt-2">Enter your credentials to access your dashboard.</p>
+            </div>
 
-            {error && (
-              <div className="alert alert-error rounded-none mb-4">
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in-up delay-1">
+              
               <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="input input-bordered w-full rounded-none"
-                  required
-                />
+                <label className="label pb-2"><span className="label-text uppercase tracking-widest text-[11px] font-bold text-base-content/70">Email Address</span></label>
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="input input-bordered w-full rounded-none pl-10 focus:outline-none focus:border-primary transition-colors"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Password</span>
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="input input-bordered w-full rounded-none"
-                  required
-                />
+                <label className="label pb-2"><span className="label-text uppercase tracking-widest text-[11px] font-bold text-base-content/70">Password</span></label>
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="input input-bordered w-full rounded-none pl-10 pr-10 focus:outline-none focus:border-primary transition-colors"
+                    required
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content transition-colors">
+                    {showPassword ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button 
                 type="submit" 
-                className="btn btn-primary w-full rounded-none"
+                className="btn btn-primary w-full rounded-none text-base font-semibold mt-8 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
                 disabled={loading}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Sign In'}
               </button>
             </form>
 
-            <p className="text-center mt-6 text-base-content/60">
+            <p className="text-center text-base-content/60 animate-fade-in-up delay-2">
               Don't have an account?{' '}
-              <Link to="/register" className="link link-primary">
+              <Link to="/register" className="font-bold text-primary hover:underline transition-all">
                 Create one
               </Link>
             </p>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

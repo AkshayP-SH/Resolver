@@ -8,6 +8,7 @@ import { ThemeProvider } from './context/ThemeContext.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Profile from './pages/Profile.jsx'
 import './App.css'
+import ToastContainer from './components/Toast.jsx'
 
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
             <Route path="/profile" element={<Profile/>} />
           </Route>
         </Routes>
+        <ToastContainer />
       </BrowserRouter>
     </ThemeProvider>
   )
