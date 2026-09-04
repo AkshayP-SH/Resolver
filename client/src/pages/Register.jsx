@@ -55,7 +55,6 @@ export default function Register() {
       
       <AuthShowcase />
 
-      {/* RIGHT PANEL: form */}
       <div className="flex flex-col min-h-screen">
         <nav className="flex justify-between items-center px-8 py-4 bg-base-200">
           <Link to="/" className="lg:hidden flex items-center gap-2">

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getComments, createComment, updateComplaint, deleteComplaint, upvoteComplaint, getUsers } from '../services/api';
 import StatusChangeModal from './StatusChangeModal';
+import { showToast } from '../services/toast';
 
 const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('details'); 
   const [staffList, setStaffList] = useState([]);
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
@@ -14,6 +14,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
   const [editData, setEditData] = useState({ title: '', description: '' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [upvoting, setUpvoting] = useState(false);
+  const [upvotes, setUpvotes] = useState(complaint?.upvotes || []);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -24,6 +25,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
       setIsEditing(false);
       setShowDeleteConfirm(false);
       setEditData({ title: complaint.title, description: complaint.description });
+      setUpvotes(complaint.upvotes || []);
     }
   }, [complaint]);
 
@@ -45,14 +47,15 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
     e.preventDefault();
     if (!newComment.trim()) return;
     setLoading(true);
-    setError('');
     try {
       const data = await createComment({ complaintId: complaint._id, text: newComment });
       const newCommentObj = data.comment || data;
       setComments([...comments, newCommentObj]);
       setNewComment('');
-    } catch (err) { setError('Failed to post comment.'); } 
-    finally { setLoading(false); }
+      showToast('Comment posted', 'success');
+    } catch (err) { 
+      showToast('Failed to post comment', 'error'); 
+    } finally { setLoading(false); }
   };
 
   const handleFieldChange = async (field, value) => {
@@ -62,19 +65,21 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
     }
     try {
       await updateComplaint(complaint._id, { [field]: value });
+      showToast(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`, 'success');
       if (onUpdate) onUpdate(); 
       onClose(); 
-    } catch (err) { setError(`Failed to update ${field}.`); }
+    } catch (err) { showToast(`Failed to update ${field}`, 'error'); }
   };
 
   const confirmStatusChange = async (explanation) => {
     try {
       await updateComplaint(complaint._id, { status: pendingStatusChange, explanation });
+      showToast(`Status changed to ${pendingStatusChange}`, 'success');
       if (onUpdate) onUpdate();
       setPendingStatusChange(null);
       onClose();
     } catch (err) {
-      setError('Failed to update status.');
+      showToast('Failed to update status', 'error');
       setPendingStatusChange(null);
     }
   };
@@ -82,28 +87,35 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
   const handleUpvote = async () => {
     setUpvoting(true);
     try {
-      await upvoteComplaint(complaint._id);
+      const data = await upvoteComplaint(complaint._id);
+      const updated = data.complaint || data;
+      setUpvotes(updated.upvotes || []);
       if (onUpdate) onUpdate();
-      onClose();
-    } catch (err) { setError('Failed to upvote.'); }
-    finally { setUpvoting(false); }
+      const nowUpvoted = (updated.upvotes || []).some(id => (typeof id === 'object' ? id._id : id) === user.id);
+      showToast(nowUpvoted ? 'Upvoted' : 'Upvote removed', 'success');
+    } catch (err) {
+      showToast('Failed to upvote', 'error');
+    } finally {
+      setUpvoting(false);
+    }
   };
-
   const handleSaveEdit = async () => {
     try {
       await updateComplaint(complaint._id, editData);
       setIsEditing(false);
+      showToast('Complaint updated', 'success');
       if (onUpdate) onUpdate();
       onClose();
-    } catch (err) { setError('Failed to save edits.'); }
+    } catch (err) { showToast('Failed to save edits', 'error'); }
   };
 
   const handleDelete = async () => {
     try {
       await deleteComplaint(complaint._id);
+      showToast('Complaint deleted', 'success');
       if (onUpdate) onUpdate();
       onClose();
-    } catch (err) { setError('Failed to delete complaint.'); }
+    } catch (err) { showToast('Failed to delete complaint', 'error'); }
   };
 
   const getRoleBadge = (commentUser) => {
@@ -122,7 +134,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
   const isCreator = complaint.createdBy?._id === user.id;
   const isSubmitted = complaint.status === 'SUBMITTED';
   const isAdmin = user.role === 'admin';
-  const hasUpvoted = complaint.upvotes?.some(id => {
+    const hasUpvoted = upvotes.some(id => {
     const voteId = typeof id === 'object' ? id._id : id;
     return voteId === user.id;
   });
@@ -131,6 +143,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
     <>
       <dialog className="modal modal-open">
         <div className="modal-box w-11/12 max-w-4xl rounded-none border border-base-300 p-0 flex flex-col max-h-[90vh]">
+          
           <div className="flex items-center justify-between border-b border-base-300 p-6 bg-base-200/30 gap-4">
             <div className="flex flex-col gap-1 flex-1 min-w-0">
               <div className="flex items-center gap-3">
@@ -156,25 +169,39 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
               <button 
                 onClick={handleUpvote} 
                 disabled={upvoting || isEditing}
-                className={`btn btn-sm rounded-none gap-1 ${hasUpvoted ? 'btn-primary' : 'btn-ghost border-base-300'}`}
+                className={`btn btn-sm rounded-none gap-1.5 font-bold uppercase tracking-wider text-xs ${hasUpvoted ? 'btn-primary' : 'btn-ghost border-base-300'}`}
                 title="Me Too"
               >
-                👍 <span className="font-bold">{complaint.upvotes?.length || 0}</span> {/* chqnge this to some svg */}
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+                {upvotes.length}
               </button>
               <button onClick={onClose} className="btn btn-sm btn-ghost btn-square rounded-none">✕</button>
             </div>
           </div>
 
-          <div className="tabs tabs-bordered px-6 bg-base-200/10">
-            <a className={`tab rounded-none ${activeTab === 'details' ? 'tab-active font-bold' : ''}`} onClick={() => setActiveTab('details')}>Details</a>
-            <a className={`tab rounded-none ${activeTab === 'comments' ? 'tab-active font-bold' : ''}`} onClick={() => setActiveTab('comments')}>
-              Comments {comments.length > 0 && <span className="badge badge-sm ml-2 rounded-none">{comments.length}</span>}
-            </a>
+          {/* TABS */}
+          <div className="flex border-b border-base-300 bg-base-200/20">
+            <button 
+              onClick={() => setActiveTab('details')} 
+              className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors relative ${activeTab === 'details' ? 'text-primary' : 'text-base-content/60 hover:text-base-content'}`}
+            >
+              Details
+              {activeTab === 'details' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+            </button>
+            <button 
+              onClick={() => setActiveTab('comments')} 
+              className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'comments' ? 'text-primary' : 'text-base-content/60 hover:text-base-content'}`}
+            >
+              Comments
+              {comments.length > 0 && <span className={`badge badge-sm rounded-none ${activeTab === 'comments' ? 'badge-primary' : 'badge-ghost'}`}>{comments.length}</span>}
+              {activeTab === 'comments' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+            </button>
           </div>
 
+          {/* BODY */}
           <div className="p-6 overflow-y-auto grow bg-base-100">
-            {error && <div className="alert alert-error rounded-none mb-4 text-sm py-2">{error}</div>}
-
             {activeTab === 'details' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -240,7 +267,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                     <div className="border-l-2 border-base-300 pl-4 space-y-6">
                       {complaint.statusHistory.map((h, i) => (
                         <div key={i} className="relative">
-                          <div className="absolute -left-6.25 top-1 w-3 h-3 rounded-full bg-primary border-2 border-base-100"></div>
+                          <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-primary border-2 border-base-100"></div>
                           <div className="text-xs text-base-content/50 mb-1">{formatDate(h.timestamp)}</div>
                           <div className="font-bold text-sm">{h.status}</div>
                           {h.explanation && (
@@ -271,8 +298,8 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                 </div>
 
                 {showDeleteConfirm && (
-                  <div className="alert alert-error rounded-none flex flex-col items-start gap-2 border-2">
-                    <span className="font-bold">Are you sure you want to delete this complaint?</span>
+                  <div className="alert alert-error rounded-none flex flex-col items-start gap-2 border-2 mt-4">
+                    <span className="font-bold text-sm">Are you sure you want to delete this complaint?</span>
                     <span className="text-xs">This action cannot be undone. All comments will also be deleted.</span>
                     <div className="flex gap-2 mt-2">
                       <button onClick={handleDelete} className="btn btn-xs btn-error rounded-none">Yes, Delete</button>

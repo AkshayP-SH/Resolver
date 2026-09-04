@@ -1,5 +1,20 @@
 import { useState } from 'react';
 import { createComplaint } from '../services/api';
+import { showToast } from '../services/toast';
+
+const priorityInfo = {
+  LOW: 'Minor inconvenience or cosmetic issue.',
+  MEDIUM: 'Standard issue requiring timely attention.',
+  HIGH: 'Major disruption affecting multiple users or areas.',
+  URGENT: 'Immediate threat to safety or critical infrastructure failure.',
+};
+
+const prioritySelectedCls = {
+  LOW: 'border-base-content/40 bg-base-200 text-base-content',
+  MEDIUM: 'border-info bg-info/10 text-info',
+  HIGH: 'border-warning bg-warning/10 text-warning',
+  URGENT: 'border-error bg-error/10 text-error',
+};
 
 export default function NewComplaintForm({ onCreated }) {
   const [formData, setFormData] = useState({
@@ -10,101 +25,126 @@ export default function NewComplaintForm({ onCreated }) {
     priority: 'MEDIUM',
   });
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
 
   const categories = ['Infrastructure', 'Electricity', 'Water', 'Sanitation', 'Safety', 'IT', 'Other'];
-  const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess(false);
     setSubmitting(true);
-
     try {
       await createComplaint(formData);
-      setSuccess(true);
+      showToast('Complaint filed successfully', 'success');
       setFormData({ title: '', description: '', category: '', location: '', priority: 'MEDIUM' });
-      if (onCreated) onCreated(); 
+      if (onCreated) onCreated();
     } catch (err) {
-      setError(err.message || 'Failed to create complaint');
+      showToast(err.message || 'Failed to create complaint', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  // block label + w-full input = label on top, field stretches edge to edge
+  const labelCls = 'block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-2';
+  const fieldCls = 'input input-bordered rounded-none w-full bg-base-200/40 border-base-300 focus:outline-none focus:border-primary';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      <div className="lg:col-span-4 flex flex-col gap-6">
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-8 animate-fade-in-up">
+        <h1 className="text-3xl md:text-4xl font-black tracking-tight">File a Complaint</h1>
+        <p className="text-base-content/60 mt-2">Be specific. Good details help staff resolve it faster.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="border border-base-300 bg-base-100 rounded-none p-6 md:p-8 space-y-6 animate-fade-in-up delay-1">
+
+        {/* title: label on top, full width */}
         <div>
-          <h1 className="text-3xl font-black tracking-tight mb-2">File a Complaint</h1>
-          <p className="text-base-content/60 text-sm leading-relaxed">
-            Provide as much detail as possible. Accurate categorization and priority selection help our staff resolve issues faster.
-          </p>
+          <label className={labelCls}>Title</label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            className={fieldCls}
+            placeholder="e.g., Broken streetlight on Main St"
+            required
+          />
         </div>
-        
-        <div className="border border-base-300 p-4 bg-base-200/30 rounded-none mt-4">
-          <h3 className="font-bold text-sm uppercase tracking-wider mb-3 text-base-content/70">Priority Guidelines</h3>
-          <ul className="space-y-3 text-xs text-base-content/80">
-            <li><span className="font-bold text-error">URGENT:</span> Immediate threat to safety or critical infrastructure failure.</li>
-            <li><span className="font-bold text-warning">HIGH:</span> Major disruption affecting multiple users or areas.</li>
-            <li><span className="font-bold text-info">MEDIUM:</span> Standard issue requiring timely attention.</li>
-            <li><span className="font-bold text-base-content/50">LOW:</span> Minor inconvenience or cosmetic issue.</li>
-          </ul>
+
+        {/* category + location stay side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className={labelCls}>Category</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="select select-bordered rounded-none w-full bg-base-200/40 border-base-300 focus:outline-none focus:border-primary"
+              required
+            >
+              <option value="">Select category</option>
+              {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Location (Optional)</label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              className={fieldCls}
+              placeholder="Building, floor, or street address"
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="lg:col-span-8">
-        {success && <div className="alert alert-success rounded-none mb-4 border-0"><span>Complaint filed successfully!</span></div>}
-        {error && <div className="alert alert-error rounded-none mb-4 border-0"><span>{error}</span></div>}
-
-        <div className="border border-base-300 bg-base-100 rounded-none">
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="form-control md:col-span-2">
-                <label className="label pb-2"><span className="label-text font-bold uppercase text-xs tracking-wider text-base-content/70">Title</span></label>
-                <input type="text" name="title" value={formData.title} onChange={handleChange} className="input input-bordered rounded-none bg-base-200/40 border-base-300 focus:outline-none focus:border-primary" placeholder="e.g., Broken streetlight on Main St" required />
-              </div>
-
-              <div className="form-control">
-                <label className="label pb-2"><span className="label-text font-bold uppercase text-xs tracking-wider text-base-content/70">Category</span></label>
-                <select name="category" value={formData.category} onChange={handleChange} className="select select-bordered rounded-none bg-base-200/40 border-base-300 focus:outline-none focus:border-primary" required>
-                  <option value="">Select category</option>
-                  {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
-              </div>
-
-              <div className="form-control">
-                <label className="label pb-2"><span className="label-text font-bold uppercase text-xs tracking-wider text-base-content/70">Priority</span></label>
-                <select name="priority" value={formData.priority} onChange={handleChange} className="select select-bordered rounded-none bg-base-200/40 border-base-300 focus:outline-none focus:border-primary">
-                  {priorities.map((p) => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
-
-              <div className="form-control md:col-span-2">
-                <label className="label pb-2"><span className="label-text font-bold uppercase text-xs tracking-wider text-base-content/70">Location (Optional)</span></label>
-                <input type="text" name="location" value={formData.location} onChange={handleChange} className="input input-bordered rounded-none bg-base-200/40 border-base-300 focus:outline-none focus:border-primary" placeholder="Building, floor, or street address" />
-              </div>
-
-              <div className="form-control md:col-span-2">
-                <label className="label pb-2"><span className="label-text font-bold uppercase text-xs tracking-wider text-base-content/70">Description</span></label>
-                <textarea name="description" value={formData.description} onChange={handleChange} className="textarea textarea-bordered rounded-none bg-base-200/40 border-base-300 focus:outline-none focus:border-primary h-32 resize-none" placeholder="Describe the issue in detail..." required />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-base-300">
-              <button type="submit" className="btn btn-primary rounded-none min-w-40" disabled={submitting}>
-                {submitting ? <span className="loading loading-spinner loading-xs"></span> : 'Submit Complaint'}
+        {/* priority segmented */}
+        <div>
+          <label className={labelCls}>Priority</label>
+          <div className="grid grid-cols-4 gap-2">
+            {Object.keys(priorityInfo).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setFormData({ ...formData, priority: p })}
+                className={`border px-2 py-2.5 text-xs font-bold uppercase tracking-widest rounded-none transition-all duration-200 ${
+                  formData.priority === p
+                    ? prioritySelectedCls[p]
+                    : 'border-base-300 text-base-content/50 hover:bg-base-200/50 hover:text-base-content'
+                }`}
+              >
+                {p}
               </button>
-            </div>
-          </form>
+            ))}
+          </div>
+          <p className="text-xs text-base-content/50 mt-2">{priorityInfo[formData.priority]}</p>
         </div>
-      </div>
+
+        {/* description: label on top, full width */}
+        <div>
+          <label className={labelCls}>Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            className="textarea textarea-bordered rounded-none w-full h-36 resize-none bg-base-200/40 border-base-300 focus:outline-none focus:border-primary"
+            placeholder="Describe the issue in detail..."
+            required
+          />
+        </div>
+
+        <div className="flex justify-end pt-4 border-t border-base-300">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn btn-primary rounded-none min-w-44 font-semibold hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+          >
+            {submitting ? <span className="loading loading-spinner loading-xs"></span> : 'Submit Complaint'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
