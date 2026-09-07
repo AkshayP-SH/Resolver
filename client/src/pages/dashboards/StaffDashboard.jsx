@@ -103,8 +103,8 @@ export default function StaffDashboard() {
 
         <div className="flex-none flex items-center gap-4">
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm rounded-none flex items-center gap-2 h-auto py-2">
-              <span className="text-sm font-medium">{user.name || user.email}</span>
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-sm min-h-11 rounded-none flex items-center gap-2">
+            <span className="text-sm font-medium truncate max-w-30 sm:max-w-none">{user.name || user.email}</span>
               <svg className="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
             </div>
             <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-none w-56 border border-base-300 z-50 mt-2">
@@ -165,10 +165,10 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint }) {
                 <tbody>
                   {assignedToMe.filter(c => c.status !== 'RESOLVED' && c.status !== 'REJECTED').map((complaint) => (
                     <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                      <td className="font-semibold">{complaint.title}</td>
-                      <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                      <td><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                      <td>{new Date(complaint.created_at).toLocaleDateString()}</td>
+                      <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
+                      <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                      <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                      <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -233,13 +233,13 @@ function AllComplaintsView({ onAssign, onSelectComplaint }) {
                   <tbody>
                     {complaints.map((complaint) => (
                       <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                        <td className="font-semibold">{complaint.title}</td>
-                        <td>{complaint.category}</td>
-                        <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                        <td><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                        <td>{complaint.createdBy?.name || 'Unknown'}</td>
-                        <td>{complaint.assignedTo?.name || 'Unassigned'}</td>
-                        <td>
+                        <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
+                        <td className="whitespace-nowrap">{complaint.category}</td>
+                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                        <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
+                        <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
+                        <td className="whitespace-nowrap">
                           {!complaint.assignedTo && (
                             <button className="btn btn-primary btn-xs rounded-none" onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}>
                               Assign to Me
@@ -299,11 +299,11 @@ function AssignedToMeView({ complaints, loading, onSelectComplaint }) {
                 <tbody>
                   {filtered.map((complaint) => (
                     <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                      <td className="font-semibold">{complaint.title}</td>
-                      <td>{complaint.category}</td>
-                      <td><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                      <td><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                      <td>{complaint.createdBy?.name || 'Unknown'}</td>
+                      <td className="font-semibold whitespace-nowrap" >{complaint.title}</td>
+                      <td className="whitespace-nowrap">{complaint.category}</td>
+                      <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                      <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                      <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -318,8 +318,7 @@ function AssignedToMeView({ complaints, loading, onSelectComplaint }) {
 
 function PaginationFooter({ page, totalPages, total, onPageChange }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-base-300 bg-base-200/30">
-      <span className="text-xs font-semibold uppercase tracking-widest text-base-content/50">Page {page} of {totalPages} · {total} total</span>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-base-300 bg-base-200/30">      <span className="text-xs font-semibold uppercase tracking-widest text-base-content/50">Page {page} of {totalPages} · {total} total</span>
       <div className="flex gap-2">
         <button disabled={page <= 1} onClick={() => onPageChange(page - 1)} className="btn btn-ghost btn-sm rounded-none disabled:opacity-30">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>

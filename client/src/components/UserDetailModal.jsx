@@ -29,7 +29,7 @@ export default function UserDetailModal({ user, onClose, onUpdate }) {
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="border border-base-300 p-4 rounded-none bg-base-200/20">
               <span className="text-xs uppercase font-bold text-base-content/50 tracking-wider block mb-1">Name</span>
               <span className="font-medium">{user.name}</span>

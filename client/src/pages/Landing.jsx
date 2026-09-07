@@ -41,19 +41,22 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-base-200 flex flex-col">
 
-      <nav className="border-b border-base-300 px-8 py-4 sticky top-0 z-50 bg-base-200">
+       <nav className="border-b border-base-300 px-4 md:px-8 py-4 sticky top-0 z-50 bg-base-200">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3 group">
             <img src="/favicon.svg" alt="Resolver" className="w-8 h-8" />
-            <span className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors duration-200">
+            <span className="hidden sm:inline text-2xl font-black tracking-tighter group-hover:text-primary transition-colors duration-200">
               RESOLVER
             </span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <ThemeToggle />
-            <div className="w-px h-6 bg-base-300"></div>
-            <Link to="/login" className="btn btn-ghost btn-sm rounded-none text-sm font-medium">Sign In</Link>
-            <Link to="/register" className="btn btn-primary btn-sm rounded-none text-sm font-medium">Create Account</Link>
+            <div className="hidden sm:block w-px h-6 bg-base-300"></div>
+            <Link to="/login" className="hidden sm:inline-flex btn btn-ghost btn-sm rounded-none text-sm font-medium">Sign In</Link>
+            <Link to="/register" className="btn btn-primary btn-sm rounded-none text-sm font-medium">
+              <span className="sm:hidden">Join</span>
+              <span className="hidden sm:inline">Create Account</span>
+            </Link>
           </div>
         </div>
       </nav>

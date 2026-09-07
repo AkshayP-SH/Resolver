@@ -181,18 +181,18 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
             </div>
           </div>
 
-          {/* TABS */}
+         {/* TABS */}
           <div className="flex border-b border-base-300 bg-base-200/20">
             <button 
               onClick={() => setActiveTab('details')} 
-              className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors relative ${activeTab === 'details' ? 'text-primary' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`px-4 sm:px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors relative ${activeTab === 'details' ? 'text-primary' : 'text-base-content/60 hover:text-base-content'}`}
             >
               Details
               {activeTab === 'details' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
             </button>
             <button 
               onClick={() => setActiveTab('comments')} 
-              className={`px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'comments' ? 'text-primary' : 'text-base-content/60 hover:text-base-content'}`}
+              className={`px-4 sm:px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'comments' ? 'text-primary' : 'text-base-content/60 hover:text-base-content'}`}
             >
               Comments
               {comments.length > 0 && <span className={`badge badge-sm rounded-none ${activeTab === 'comments' ? 'badge-primary' : 'badge-ghost'}`}>{comments.length}</span>}
