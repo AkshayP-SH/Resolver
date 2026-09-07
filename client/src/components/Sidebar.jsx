@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import { logout } from '../services/api';
 
 export default function Sidebar({ menuItems, currentPage, onPageChange, isMobileOpen, onMobileClose }) {
   const handleNavClick = (id) => {
@@ -13,7 +14,6 @@ export default function Sidebar({ menuItems, currentPage, onPageChange, isMobile
       <div className="h-16 flex items-center border-b border-base-300 shrink-0 px-4">
         <Link to="/" className="flex items-center gap-3 w-full overflow-hidden">
           <img src="/favicon.svg" alt="Resolver" className="w-6 h-6 shrink-0" />
-          {/* text fades in on desktop hover, always shows on mobile */}
           <span className={`font-black text-xl tracking-tighter whitespace-nowrap transition-all duration-300 ${
             isMobile ? 'opacity-100 w-auto' : 'opacity-0 w-0 md:group-hover:opacity-100 md:group-hover:w-auto overflow-hidden'
           }`}>
@@ -74,7 +74,10 @@ export default function Sidebar({ menuItems, currentPage, onPageChange, isMobile
 
         {isMobile && (
           <button
-            onClick={() => { localStorage.clear(); window.location.href = '/'; }}
+            onClick={async () => { 
+              await logout(); 
+              window.location.href = '/'; 
+            }}
             className="w-full flex items-center gap-3 p-2.5 text-error hover:bg-error/10 rounded-none"
           >
             <div className="w-5 h-5 shrink-0 flex items-center justify-center">

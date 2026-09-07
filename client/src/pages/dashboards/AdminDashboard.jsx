@@ -7,6 +7,8 @@ import UserDetailModal from '../../components/UserDetailModal';
 import FilterBar from '../../components/FilterBar';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { logout } from '../../services/api';
+import { showToast } from '../../services/toast';
 
 export default function AdminDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -107,7 +109,7 @@ export default function AdminDashboard() {
               </li>
               <li><Link to="/profile" className="font-medium">Manage Profile</Link></li>
               <div className="divider my-0"></div>
-              <li><button className="text-error" onClick={() => { localStorage.clear(); window.location.href = '/'; }}>Logout</button></li>
+              <li><button className="text-error" onClick={async () => { await logout(); window.location.href = '/'; }}>Logout</button></li>
             </ul>
           </div>
         </div>

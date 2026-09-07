@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import connectDB from "./src/config/db.js";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import router from "./src/routers/auth.router.js";
 import {protect , adminOnly} from './src/middleware/authMiddleware.js';
 import complaintRouter from './src/routers/complaint.router.js';
@@ -13,11 +14,13 @@ import { apiLimiter, authLimiter } from "./src/middleware/rateLimiter.js";
 
 
 const corsOptions = {
-  origin: process.env.CLIENT_ORIGIN
+  origin: process.env.CLIENT_ORIGIN,
+  credentials: true
 }
 const app = express();
 app.set("trust proxy", 1);
 app.use(express.json());
+app.use(cookieParser());
 app.use(helmet());
 app.use(cors(corsOptions))
 

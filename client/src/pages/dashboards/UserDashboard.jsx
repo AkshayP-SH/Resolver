@@ -7,6 +7,7 @@ import FilterBar from '../../components/FilterBar';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../services/toast';
+import { logout } from '../../services/api';
 
 export default function UserDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -89,8 +90,8 @@ export default function UserDashboard() {
 
         <div className="flex-none flex items-center gap-4">
           <div className="dropdown dropdown-end">
-           <div tabIndex={0} role="button" className="btn btn-ghost btn-sm min-h-[44px] rounded-none flex items-center gap-2">
-              <span className="text-sm font-medium truncate max-w-[120px] sm:max-w-none">{user.name || user.email}</span>
+           <div tabIndex={0} role="button" className="btn btn-ghost btn-sm min-h-11 rounded-none flex items-center gap-2">
+              <span className="text-sm font-medium truncate max-w-30 sm:max-w-none">{user.name || user.email}</span>
               <svg className="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
@@ -108,8 +109,7 @@ export default function UserDashboard() {
               <li><Link to="/profile" className="font-medium">Manage Profile</Link></li>
               <div className="divider my-0"></div>
               <li>
-                <button className="text-error" onClick={() => { localStorage.clear(); window.location.href = '/'; }}>Logout</button>
-              </li>
+                <button className="text-error" onClick={async () => { await logout(); window.location.href = '/'; }}>Logout</button>              </li>
             </ul>
           </div>
         </div>

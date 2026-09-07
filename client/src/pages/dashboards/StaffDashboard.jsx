@@ -7,6 +7,7 @@ import FilterBar from '../../components/FilterBar';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../services/toast';
+import { logout } from '../../services/api';
 
 export default function StaffDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -114,7 +115,7 @@ export default function StaffDashboard() {
               </li>
               <li><Link to="/profile" className="font-medium">Manage Profile</Link></li>
               <div className="divider my-0"></div>
-              <li><button className="text-error" onClick={() => { localStorage.clear(); window.location.href = '/'; }}>Logout</button></li>
+              <li><button className="text-error" onClick={async () => { await logout(); window.location.href = '/'; }}>Logout</button></li>
             </ul>
           </div>
         </div>

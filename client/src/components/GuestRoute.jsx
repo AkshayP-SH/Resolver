@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { getMyProfile } from '../services/api';
 
-export default function ProtectedRoute() {
+export default function GuestRoute() {
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
@@ -13,7 +13,7 @@ export default function ProtectedRoute() {
         await getMyProfile();
         setIsAuthenticated(true);
       } catch (err) {
-        setIsAuthenticated(false);
+        setIsAuthenticated(false); 
       } finally {
         setIsChecking(false);
       }
@@ -30,8 +30,8 @@ export default function ProtectedRoute() {
   }
 
   return isAuthenticated ? (
-    <Outlet />
+    <Navigate to="/dashboard" state={{ from: location }} replace />
   ) : (
-    <Navigate to="/login" state={{ from: location }} replace />
+    <Outlet />
   );
 }
