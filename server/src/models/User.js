@@ -2,14 +2,14 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
 const UserSchema = new mongoose.Schema({
-    name: { type:String, required: true},
-    email: { type:String, required: true, unique: true, lowercase: true,validate: {
+    name: { type:String, maxlength: 50, required: true},
+    email: { type:String, maxlength: 254, required: true, unique: true, lowercase: true,validate: {
       validator: function(v) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
       },
       message: 'Invalid email'
     },},
-    password: { type:String, required: true, minlength: 6},
+    password: { type:String, maxlength: 128, required: true, minlength: 6},
     role: {type: String, enum: ['user', 'admin', 'staff'], default:'user',message:'{VALUE} is not a valid role'}
 },
     {

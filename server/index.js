@@ -3,24 +3,32 @@ import express from "express";
 import connectDB from "./src/config/db.js";
 import cors from "cors";
 import router from "./src/routers/auth.router.js";
-import protect from './src/middleware/authMiddleware.js';
+import {protect , adminOnly} from './src/middleware/authMiddleware.js';
 import complaintRouter from './src/routers/complaint.router.js';
 import commentRouter from './src/routers/comment.router.js';
 import userRouter from './src/routers/user.router.js';
 import publicRouter from './src/routers/public.router.js';
+import helmet from 'helmet';
+import { apiLimiter, authLimiter } from "./src/middleware/rateLimiter.js";
 
 
-
-
+const corsOptions = {
+  origin: process.env.CLIENT_ORIGIN
+}
 const app = express();
+app.set("trust proxy", 1);
 app.use(express.json());
-app.use(cors());
+app.use(helmet());
+app.use(cors(corsOptions))
+
 
 const PORT = process.env.PORT;
 
 async function startserver() {
   try{
     await connectDB();
+    app.use('/api/auth',authLimiter);
+    app.use('/api',apiLimiter);
     app.use("/api/auth",router);
     app.use('/api/public', publicRouter);
     app.use('/api/complaints', protect, complaintRouter);

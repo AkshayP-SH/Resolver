@@ -1,11 +1,11 @@
    import express from 'express';
    import User from '../models/User.js';
-   import protect from '../middleware/authMiddleware.js';
+   import { protect, adminOnly } from '../middleware/authMiddleware.js';
    import bcrypt from 'bcrypt';
 
    const router = express.Router();
 
-   router.get('/', async (req, res) => {
+   router.get('/', protect, async (req, res) => {
      try {
        const query = req.query.role ? { role: req.query.role } : {};
        const users = await User.find(query).select('-password');
@@ -57,7 +57,7 @@
   }
 })
 
-   router.get('/:id', async (req, res) => {
+   router.get('/:id', protect, async (req, res) => {
      try {
        const user = await User.findById(req.params.id).select('-password');
        if (!user) {
@@ -69,7 +69,7 @@
      }
    });
 
-   router.put('/:id', protect, async (req, res) => {
+   router.put('/:id', protect, adminOnly, async (req, res) => {
      try {
         const userToUpdate = await User.findById(req.params.id);
 
