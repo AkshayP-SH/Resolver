@@ -39,7 +39,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 grid grid-cols-1 lg:grid-cols-[3fr_2fr] xl:grid-cols-[7fr_3fr]">
+    <div className="min-h-screen bg-base-200 grid grid-cols-1 lg:grid-cols-2">
       
       <AuthShowcase />
 

@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import {BrowserRouter, Routes, Route} from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -7,24 +6,29 @@ import Landing from './pages/Landing.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Profile from './pages/Profile.jsx'
-import './App.css'
+import NotFound from './pages/NotFound.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import ToastContainer from './components/Toast.jsx'
-
+import './App.css'
 
 function App() {
   return (
     <ThemeProvider> 
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile/>} />
-          </Route>
-        </Routes>
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile/>} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </ErrorBoundary>
         <ToastContainer />
       </BrowserRouter>
     </ThemeProvider>
