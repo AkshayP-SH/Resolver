@@ -1,10 +1,12 @@
     import express from 'express';
     import Complaint from '../models/Complaint.js';
     import Comment from '../models/Comment.js';
+    import multer from 'multer';
+    import { upload } from '../middleware/uploadMiddleware.js';
 
     const router = express.Router();
 
-    router.post('/', async (req, res) => {
+    router.post('/', upload.single('attachment'), async (req, res) => {
         try{
             const { title, description, category, location, priority} = req.body;
             const newcomplaint = new Complaint({ 
@@ -16,6 +18,14 @@
                 createdBy: req.user._id
 
                 });
+                if (req.file) {
+                    newcomplaint.attachment = {
+                        data: req.file.buffer,
+                        contentType: req.file.mimetype,
+                        filename: req.file.originalname,
+                        size: req.file.size
+                    };
+                }
                 await newcomplaint.save();
                 res.status(201).json({ 
         message: 'Complaint created successfully', 
@@ -233,6 +243,35 @@ router.get('/', async (req, res) => {
         } catch (error) {
             res.status(500).json({ message: 'Error deleting complaint', error: error.message });
         }
+    });
+
+    router.get('/:id/attachment', async (req, res) => {
+        try {
+            const complaint = await Complaint.findById(req.params.id);
+            if (!complaint || !complaint.attachment || !complaint.attachment.data) {
+                return res.status(404).json({ message: 'Attachment not found' });
+            }
+            
+            res.set('Content-Type', complaint.attachment.contentType);
+            res.set('Content-Disposition', `inline; filename="${complaint.attachment.filename}"`);
+            res.send(complaint.attachment.data);
+        } catch (error) {
+            res.status(500).json({ message: 'Error fetching attachment', error: error.message });
+        }
+    });
+
+
+    router.use((err, req, res, next) => {
+        if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ message: 'File too large. Maximum size is 5MB.' });
+            }
+            return res.status(400).json({ message: err.message });
+        }
+        if (err) {
+            return res.status(400).json({ message: err.message });
+        }
+        next();
     });
 
     export default router;

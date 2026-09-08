@@ -18,6 +18,12 @@ const ComplaintSchema = new mongoose.Schema({
     status: { type: String, enum: ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'], default: 'SUBMITTED' },
     statusHistory: { type: [statusHistorySchema], default: [] }, 
     upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    attachment: {
+        data: { type: Buffer },
+        contentType: { type: String },
+        filename: { type: String },
+        size: { type: Number }
+    },
 }, {
     timestamps: {
         createdAt: 'created_at',
