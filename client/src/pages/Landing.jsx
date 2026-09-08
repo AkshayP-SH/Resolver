@@ -153,7 +153,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="border-t border-base-300">
         <div className="max-w-6xl mx-auto px-8 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">

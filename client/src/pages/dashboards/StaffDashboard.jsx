@@ -136,7 +136,6 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint }) {
   const total = complaints.length;
   const myAssigned = assignedToMe.length;
   const inProgress = assignedToMe.filter(c => c.status === 'IN_PROGRESS').length;
-  // FIXED: was checking CLOSED, should be REJECTED
   const resolved = assignedToMe.filter(c => c.status === 'RESOLVED' || c.status === 'REJECTED').length;
 
   return (
@@ -182,7 +181,6 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint }) {
   );
 }
 
-// server-side pagination for all complaints
 function AllComplaintsView({ onAssign, onSelectComplaint }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);

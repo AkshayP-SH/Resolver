@@ -45,7 +45,6 @@ export default function NewComplaintForm({ onCreated }) {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // block label + w-full input = label on top, field stretches edge to edge
   const labelCls = 'block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-2';
   const fieldCls = 'input input-bordered rounded-none w-full bg-base-200/40 border-base-300 focus:outline-none focus:border-primary';
 
@@ -58,7 +57,6 @@ export default function NewComplaintForm({ onCreated }) {
 
       <form onSubmit={handleSubmit} className="border border-base-300 bg-base-100 rounded-none p-6 md:p-8 space-y-6 animate-fade-in-up delay-1">
 
-        {/* title: label on top, full width */}
         <div>
           <label className={labelCls}>Title</label>
           <input
@@ -72,7 +70,6 @@ export default function NewComplaintForm({ onCreated }) {
           />
         </div>
 
-        {/* category + location stay side by side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className={labelCls}>Category</label>
@@ -100,7 +97,6 @@ export default function NewComplaintForm({ onCreated }) {
           </div>
         </div>
 
-        {/* priority segmented */}
         <div>
           <label className={labelCls}>Priority</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -122,7 +118,6 @@ export default function NewComplaintForm({ onCreated }) {
           <p className="text-xs text-base-content/50 mt-2">{priorityInfo[formData.priority]}</p>
         </div>
 
-        {/* description: label on top, full width */}
         <div>
           <label className={labelCls}>Description</label>
           <textarea

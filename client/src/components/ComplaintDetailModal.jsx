@@ -200,7 +200,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
             </button>
           </div>
 
-          {/* BODY */}
           <div className="p-6 overflow-y-auto grow bg-base-100">
             {activeTab === 'details' && (
               <div className="space-y-6">

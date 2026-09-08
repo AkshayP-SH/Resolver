@@ -34,9 +34,10 @@ router.get('/', async (req, res) => {
         if (status) filter.status = status;
         if (category) filter.category = category;
         if (search) {
+            const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             filter.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
+                { title: { $regex: escapedSearch, $options: 'i' } },
+                { description: { $regex: escapedSearch, $options: 'i' } }
             ];
         }
         if (mine === 'true') filter.createdBy = req.user._id;
@@ -131,6 +132,13 @@ router.get('/', async (req, res) => {
                     }
                 }
             } else if (req.user.role === 'staff') {
+                const isAssigned = complaint.assignedTo && complaint.assignedTo.toString() === req.user._id.toString();
+                const isSelfAssigning = assignedTo && !complaint.assignedTo;
+                
+                if (!isAssigned && !isSelfAssigning) {
+                    return res.status(403).json({ message: 'You can only update complaints assigned to you' });
+                }
+                
                 if (status) complaint.status = status;
                 if (assignedTo) {
                     complaint.assignedTo = req.user._id;

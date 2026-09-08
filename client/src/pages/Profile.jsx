@@ -51,7 +51,6 @@ export default function Profile() {
       await updateMyProfile(payload);
       showToast('Profile updated', 'success');
       setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
-      // refresh so the navbar name updates everywhere
       setTimeout(() => window.location.reload(), 800);
     } catch (err) {
       showToast(err.message || 'Failed to update profile', 'error');
@@ -129,7 +128,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* security card */}
             <div className="border border-base-300 bg-base-100 rounded-none p-6 md:p-8 animate-fade-in-up delay-2">
               <h2 className="text-xs font-bold uppercase tracking-widest text-base-content/50 mb-2">Change Password</h2>
               <p className="text-xs text-base-content/50 mb-6">Leave these blank if you don't want to change it.</p>

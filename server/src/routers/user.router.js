@@ -36,7 +36,7 @@
     }
     if (req.body.name) user.name = req.body.name;
 
-    if (req.body.password) {
+    if (req.body.newPassword) {
       if (!req.body.currentPassword) {
         return res.status(400).json({ message: 'Current password is required to change password' });
       }
@@ -45,6 +45,7 @@
         return res.status(400).json({ message: 'Current password is incorrect' });
       }
       user.password = req.body.newPassword;
+      //user.tokenVersion += 1;
     }
 
     const updatedUser = await user.save();

@@ -44,7 +44,6 @@ export default function UserDashboard() {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      // limit 1000 so overview stats + my complaints get everything
       const data = await getComplaints({ limit: 1000 });
       setComplaints(Array.isArray(data) ? data : (data.complaints || []));
     } catch (error) {
@@ -132,7 +131,6 @@ export default function UserDashboard() {
   );
 }
 
-// server-side pagination for all complaints
 function AllComplaintsView({ onSelectComplaint }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -203,7 +201,6 @@ function AllComplaintsView({ onSelectComplaint }) {
   );
 }
 
-// client-side filtering + pagination for my complaints
 function MyComplaintsView({ complaints, loading, onSelectComplaint }) {
   const [filters, setFilters] = useState({});
   const [page, setPage] = useState(1);
