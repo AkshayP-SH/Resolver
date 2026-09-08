@@ -38,10 +38,30 @@ export const getComplaintById = async (id) => {
 };
 
 export const createComplaint = async (complaintData) => {
-  return apiFetch(`${API_URL}/api/complaints`, {
-    method: 'POST',
-    body: JSON.stringify(complaintData),
-  });
+  if (complaintData.attachment instanceof File) {
+    const formData = new FormData();
+    formData.append('title', complaintData.title);
+    formData.append('description', complaintData.description);
+    formData.append('category', complaintData.category);
+    formData.append('location', complaintData.location || '');
+    formData.append('priority', complaintData.priority);
+    formData.append('attachment', complaintData.attachment);
+    
+    const response = await fetch(`${API_URL}/api/complaints`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+    
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to create complaint');
+    return data;
+  } else {
+    return apiFetch(`${API_URL}/api/complaints`, {
+      method: 'POST',
+      body: JSON.stringify(complaintData),
+    });
+  }
 };
 
 export const updateComplaint = async (id, updateData) => {

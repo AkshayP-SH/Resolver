@@ -24,6 +24,7 @@ export default function NewComplaintForm({ onCreated }) {
     location: '',
     priority: 'MEDIUM',
   });
+  const [attachment, setAttachment] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const categories = ['Infrastructure', 'Electricity', 'Water', 'Sanitation', 'Safety', 'IT', 'Other'];
@@ -32,9 +33,10 @@ export default function NewComplaintForm({ onCreated }) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await createComplaint(formData);
+      await createComplaint({ ...formData, attachment });
       showToast('Complaint filed successfully', 'success');
       setFormData({ title: '', description: '', category: '', location: '', priority: 'MEDIUM' });
+      setAttachment(null);
       if (onCreated) onCreated();
     } catch (err) {
       showToast(err.message || 'Failed to create complaint', 'error');
@@ -128,6 +130,56 @@ export default function NewComplaintForm({ onCreated }) {
             placeholder="Describe the issue in detail..."
             required
           />
+        </div>
+
+        {/* attachment */}
+        <div>
+          <label className={labelCls}>Attachment (Optional)</label>
+          <div className="border border-base-300 rounded-none p-4 bg-base-200/40">
+            <input
+              type="file"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  if (file.size > 5 * 1024 * 1024) {
+                    showToast('File too large. Maximum size is 5MB.', 'error');
+                    e.target.value = '';
+                    setAttachment(null);
+                    return;
+                  }
+                  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+                  if (!allowedTypes.includes(file.type)) {
+                    showToast('Only images and PDFs are allowed.', 'error');
+                    e.target.value = '';
+                    setAttachment(null);
+                    return;
+                  }
+                  setAttachment(file);
+                }
+              }}
+              accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+              className="file-input file-input-bordered w-full rounded-none"
+            />
+            <p className="text-xs text-base-content/50 mt-2">
+              Max 5MB. Images (JPEG, PNG, GIF, WebP) and PDFs only.
+            </p>
+            {attachment && (
+              <div className="mt-2 flex items-center gap-2 text-sm">
+                <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="font-medium">{attachment.name}</span>
+                <span className="text-base-content/50">({(attachment.size / 1024).toFixed(1)} KB)</span>
+                <button
+                  type="button"
+                  onClick={() => setAttachment(null)}
+                  className="btn btn-ghost btn-xs text-error"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex justify-end pt-4 border-t border-base-300">
