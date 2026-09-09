@@ -16,7 +16,8 @@ export default function UserDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [reloadTrigger, setReloadTrigger] = useState(0); // Automatic refresh trigger
+  const [reloadTrigger, setReloadTrigger] = useState(0); 
+  const [updatingId, setUpdatingId] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -41,25 +42,33 @@ export default function UserDashboard() {
 
   const refreshAll = () => { 
     fetchComplaints(); 
-    setReloadTrigger(prev => prev + 1); // Force child components to re-fetch
+    setReloadTrigger(prev => prev + 1); 
     if (window.refreshNotifications) window.refreshNotifications(); 
   };
 
   const handleUpvote = async (e, complaintId) => {
     e.stopPropagation();
-    try { await upvoteComplaint(complaintId); await refreshAll(); showToast('Upvote updated', 'success'); } 
-    catch (error) { showToast('Failed to upvote', 'error'); }
+    setUpdatingId(complaintId);
+    try { 
+      await upvoteComplaint(complaintId); 
+      await refreshAll(); 
+      showToast('Upvote updated', 'success'); 
+    } catch (error) { 
+      showToast('Failed to upvote', 'error'); 
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const myComplaints = complaints.filter((c) => c.createdBy && c.createdBy._id === user.id);
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'all-complaints': return <AllComplaintsView reloadTrigger={reloadTrigger} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
-      case 'my-complaints': return <MyComplaintsView complaints={myComplaints} loading={loading} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'all-complaints': return <AllComplaintsView reloadTrigger={reloadTrigger} updatingId={updatingId} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'my-complaints': return <MyComplaintsView complaints={myComplaints} loading={loading} updatingId={updatingId} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
       case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
-      case 'overview': return <DashboardOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
-      default: return <DashboardOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'overview': return <DashboardOverview complaints={complaints} user={user} updatingId={updatingId} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      default: return <DashboardOverview complaints={complaints} user={user} updatingId={updatingId} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
     }
   };
 
@@ -93,7 +102,7 @@ export default function UserDashboard() {
   );
 }
 
-function AllComplaintsView({ reloadTrigger, onSelectComplaint, onUpvote }) {
+function AllComplaintsView({ reloadTrigger, updatingId, onSelectComplaint, onUpvote }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -112,7 +121,7 @@ function AllComplaintsView({ reloadTrigger, onSelectComplaint, onUpvote }) {
       } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
     };
     fetchFiltered();
-  }, [filters, page, reloadTrigger]); // <-- Added reloadTrigger to auto-refresh
+  }, [filters, page, reloadTrigger]);
 
   return (
     <div>
@@ -141,7 +150,7 @@ function AllComplaintsView({ reloadTrigger, onSelectComplaint, onUpvote }) {
                         <tr 
                           key={complaint._id} 
                           className="group hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors"
-                          onClick={() => onSelectComplaint(complaint)} // <-- ADDED: Opens modal on row click
+                          onClick={() => onSelectComplaint(complaint)}
                         >
                           <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
                           <td className="whitespace-nowrap">{complaint.category}</td>
@@ -152,14 +161,21 @@ function AllComplaintsView({ reloadTrigger, onSelectComplaint, onUpvote }) {
                           <td className="bg-transparent border-r-0 border-l-0 p-2">
                             <button
                               onClick={(e) => onUpvote(e, complaint._id)}
+                              disabled={updatingId === complaint._id} // <-- DISABLED while loading
                               className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${
                                 hasUpvoted
                                   ? 'bg-primary border-primary text-white w-16'
                                   : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'
                               }`}
                             >
-                              <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                              <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                              {updatingId === complaint._id ? (
+                                <span className="loading loading-spinner loading-xs"></span> // <-- SHOW SPINNER
+                              ) : (
+                                <>
+                                  <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                  <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                                </>
+                              )}
                             </button>
                           </td>
                         </tr>
@@ -177,7 +193,7 @@ function AllComplaintsView({ reloadTrigger, onSelectComplaint, onUpvote }) {
   );
 }
 
-function MyComplaintsView({ complaints, loading, onSelectComplaint, onUpvote }) {
+function MyComplaintsView({ complaints, loading, updatingId, onSelectComplaint, onUpvote }) {
   const [filters, setFilters] = useState({});
   const [page, setPage] = useState(1);
   const LIMIT = 10;
@@ -227,7 +243,7 @@ function MyComplaintsView({ complaints, loading, onSelectComplaint, onUpvote }) 
                         <tr 
                           key={complaint._id} 
                           className="group hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors"
-                          onClick={() => onSelectComplaint(complaint)} // <-- ADDED: Opens modal on row click
+                          onClick={() => onSelectComplaint(complaint)}
                         >
                           <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
                           <td className="whitespace-nowrap">{complaint.category}</td>
@@ -237,14 +253,21 @@ function MyComplaintsView({ complaints, loading, onSelectComplaint, onUpvote }) 
                           <td className="bg-transparent border-r-0 border-l-0 p-2">
                             <button
                               onClick={(e) => onUpvote(e, complaint._id)}
+                              disabled={updatingId === complaint._id}
                               className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${
                                 hasUpvoted
                                   ? 'bg-primary border-primary text-white w-16'
                                   : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'
                               }`}
                             >
-                              <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                              <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                              {updatingId === complaint._id ? (
+                                <span className="loading loading-spinner loading-xs"></span>
+                              ) : (
+                                <>
+                                  <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                  <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                                </>
+                              )}
                             </button>
                           </td>
                         </tr>
@@ -262,7 +285,7 @@ function MyComplaintsView({ complaints, loading, onSelectComplaint, onUpvote }) 
   );
 }
 
-function DashboardOverview({ complaints, user, onSelectComplaint, onUpvote }) {
+function DashboardOverview({ complaints, user, updatingId, onSelectComplaint, onUpvote }) {
   const total = complaints.length;
   const pending = complaints.filter(c => c.status === 'SUBMITTED').length;
   const inProgress = complaints.filter(c => c.status === 'IN_PROGRESS').length;
@@ -298,7 +321,7 @@ function DashboardOverview({ complaints, user, onSelectComplaint, onUpvote }) {
                       <tr 
                         key={complaint._id} 
                         className="group hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors"
-                        onClick={() => onSelectComplaint(complaint)} // <-- ADDED: Opens modal on row click
+                        onClick={() => onSelectComplaint(complaint)}
                       >
                         <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
                         <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
@@ -307,14 +330,21 @@ function DashboardOverview({ complaints, user, onSelectComplaint, onUpvote }) {
                         <td className="bg-transparent border-r-0 border-l-0 p-2">
                           <button
                             onClick={(e) => onUpvote(e, complaint._id)}
+                            disabled={updatingId === complaint._id}
                             className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${
                               hasUpvoted
                                 ? 'bg-primary border-primary text-white w-16'
                                 : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'
                             }`}
                           >
-                            <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                            <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                            {updatingId === complaint._id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              <>
+                                <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                              </>
+                            )}
                           </button>
                         </td>
                       </tr>

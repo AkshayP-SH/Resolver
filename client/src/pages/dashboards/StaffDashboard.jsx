@@ -17,6 +17,7 @@ export default function StaffDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
+  const [updatingId, setUpdatingId] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -56,18 +57,22 @@ export default function StaffDashboard() {
 
   const handleUpvote = async (e, complaintId) => {
     e.stopPropagation();
+    setUpdatingId(complaintId);
     try { 
       await upvoteComplaint(complaintId); 
       await refreshAll(); 
       showToast('Upvote updated', 'success'); 
     } catch (error) { 
       showToast('Failed to upvote', 'error'); 
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   const assignedToMe = complaints.filter((c) => c.assignedTo && c.assignedTo._id === user.id);
 
   const handleAssignToMe = async (complaintId) => {
+    setUpdatingId(complaintId);
     console.log('📌 [StaffDashboard] Attempting to assign:', complaintId);
     try {
       const response = await updateComplaint(complaintId, { assignedTo: 'self', status: 'ASSIGNED' });
@@ -77,10 +82,13 @@ export default function StaffDashboard() {
     } catch (error) { 
       console.error('❌ [StaffDashboard] Assign API error:', error);
       showToast('Failed to assign', 'error'); 
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   const handleStatusChange = async (complaintId, newStatus) => {
+    setUpdatingId(complaintId);
     console.log('🔄 [StaffDashboard] Changing status to:', newStatus, 'for:', complaintId);
     try {
       const response = await updateComplaint(complaintId, { status: newStatus });
@@ -90,16 +98,18 @@ export default function StaffDashboard() {
     } catch (error) { 
       console.error('❌ [StaffDashboard] Status change API error:', error);
       showToast('Failed to update status', 'error'); 
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'overview': return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
-      case 'all-complaints': return <AllComplaintsView reloadTrigger={reloadTrigger} onAssign={handleAssignToMe} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
-      case 'assigned-to-me': return <AssignedToMeView complaints={assignedToMe} loading={loading} reloadTrigger={reloadTrigger} onStatusChange={handleStatusChange} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'overview': return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} updatingId={updatingId} />;
+      case 'all-complaints': return <AllComplaintsView reloadTrigger={reloadTrigger} updatingId={updatingId} onAssign={handleAssignToMe} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'assigned-to-me': return <AssignedToMeView complaints={assignedToMe} loading={loading} reloadTrigger={reloadTrigger} updatingId={updatingId} onStatusChange={handleStatusChange} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
       case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
-      default: return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      default: return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} updatingId={updatingId} />;
     }
   };
 
@@ -133,8 +143,7 @@ export default function StaffDashboard() {
   );
 }
 
-function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint, onUpvote }) {
-  // ... (Keep your existing StaffOverview code, it is correct)
+function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint, onUpvote, updatingId }) {
   const total = complaints.length;
   const myAssigned = assignedToMe.length;
   const inProgress = assignedToMe.filter(c => c.status === 'IN_PROGRESS').length;
@@ -174,9 +183,19 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint, onUp
                         <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
                         <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
                         <td className="bg-transparent border-r-0 border-l-0 p-2">
-                          <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
-                            <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                            <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                          <button 
+                            disabled={updatingId === complaint._id}
+                            onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} 
+                            className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}
+                          >
+                            {updatingId === complaint._id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              <>
+                                <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                              </>
+                            )}
                           </button>
                         </td>
                       </tr>
@@ -192,7 +211,7 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint, onUp
   );
 }
 
-function AllComplaintsView({ reloadTrigger, onAssign, onSelectComplaint, onUpvote }) {
+function AllComplaintsView({ reloadTrigger, updatingId, onAssign, onSelectComplaint, onUpvote }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -247,12 +266,32 @@ function AllComplaintsView({ reloadTrigger, onAssign, onSelectComplaint, onUpvot
                           <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
                           <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
                           <td className="whitespace-nowrap">
-                            {!complaint.assignedTo && <button className="btn btn-primary btn-xs rounded-none" onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}>Assign to Me</button>}
+                            {!complaint.assignedTo && (
+                              <button 
+                                className="btn btn-primary btn-xs rounded-none" 
+                                disabled={updatingId === complaint._id}
+                                onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}
+                              >
+                                {updatingId === complaint._id ? (
+                                  <span className="loading loading-spinner loading-xs"></span>
+                                ) : 'Assign to Me'}
+                              </button>
+                            )}
                           </td>
                           <td className="bg-transparent border-r-0 border-l-0 p-2">
-                            <button onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
-                              <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                              <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                            <button 
+                              disabled={updatingId === complaint._id}
+                              onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} 
+                              className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}
+                            >
+                              {updatingId === complaint._id ? (
+                                <span className="loading loading-spinner loading-xs"></span>
+                              ) : (
+                                <>
+                                  <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                  <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                                </>
+                              )}
                             </button>
                           </td>
                         </tr>
@@ -270,7 +309,7 @@ function AllComplaintsView({ reloadTrigger, onAssign, onSelectComplaint, onUpvot
   );
 }
 
-function AssignedToMeView({ complaints, loading, reloadTrigger, onStatusChange, onSelectComplaint, onUpvote }) {
+function AssignedToMeView({ complaints, loading, reloadTrigger, updatingId, onStatusChange, onSelectComplaint, onUpvote }) {
   const [filters, setFilters] = useState({});
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -317,16 +356,15 @@ function AssignedToMeView({ complaints, loading, reloadTrigger, onStatusChange, 
                         <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
                         <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
                         <td className="whitespace-nowrap">
-                          {/* Inline status change for immediate UX, stops propagation so it doesn't open the modal */}
                           <select 
                             className="select select-bordered select-xs rounded-none"
                             value={complaint.status}
+                            disabled={updatingId === complaint._id || complaint.status === 'RESOLVED' || complaint.status === 'REJECTED'}
                             onClick={(e) => e.stopPropagation()} 
                             onChange={(e) => {
                               e.stopPropagation();
                               if (onStatusChange) onStatusChange(complaint._id, e.target.value);
                             }}
-                            disabled={complaint.status === 'RESOLVED' || complaint.status === 'REJECTED'}
                           >
                             <option value="ASSIGNED">ASSIGNED</option>
                             <option value="IN_PROGRESS">IN_PROGRESS</option>
@@ -335,9 +373,19 @@ function AssignedToMeView({ complaints, loading, reloadTrigger, onStatusChange, 
                           </select>
                         </td>
                         <td className="bg-transparent border-r-0 border-l-0 p-2">
-                          <button onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
-                            <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                            <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                          <button 
+                            disabled={updatingId === complaint._id}
+                            onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} 
+                            className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}
+                          >
+                            {updatingId === complaint._id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              <>
+                                <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                              </>
+                            )}
                           </button>
                         </td>
                       </tr>

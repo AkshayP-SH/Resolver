@@ -6,7 +6,9 @@ import { showToast } from '../services/toast';
 const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // For comments
+  const [saving, setSaving] = useState(false);   // For edit/save
+  const [deleting, setDeleting] = useState(false); // For delete
   const [activeTab, setActiveTab] = useState('details'); 
   const [staffList, setStaffList] = useState([]);
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
@@ -99,39 +101,50 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
       setUpvoting(false);
     }
   };
+
   const handleSaveEdit = async () => {
+    setSaving(true);
     try {
       await updateComplaint(complaint._id, editData);
       setIsEditing(false);
       showToast('Complaint updated', 'success');
       if (onUpdate) onUpdate();
       onClose();
-    } catch (err) { showToast('Failed to save edits', 'error'); }
+    } catch (err) { 
+      showToast('Failed to save edits', 'error'); 
+    } finally { 
+      setSaving(false); 
+    }
   };
 
   const handleDelete = async () => {
+    setDeleting(true);
     try {
       await deleteComplaint(complaint._id);
       showToast('Complaint deleted', 'success');
       if (onUpdate) onUpdate();
       onClose();
-    } catch (err) { showToast('Failed to delete complaint', 'error'); }
+    } catch (err) { 
+      showToast('Failed to delete complaint', 'error'); 
+    } finally { 
+      setDeleting(false); 
+    }
   };
 
   const handleViewAttachment = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/complaints/${complaint._id}/attachment`, {
-      credentials: 'include' 
-    });
-    if (!response.ok) throw new Error('Not authorized');
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    window.open(url, '_blank');
-  } catch (err) {
-    console.error('Attachment fetch error:', err);
-    showToast('Failed to load attachment. Session may have expired.', 'error');
-  }
-};
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/complaints/${complaint._id}/attachment`, {
+        credentials: 'include' 
+      });
+      if (!response.ok) throw new Error('Not authorized');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error('Attachment fetch error:', err);
+      showToast('Failed to load attachment. Session may have expired.', 'error');
+    }
+  };
 
   const getRoleBadge = (commentUser) => {
     if (!commentUser) return { text: 'User', cls: 'badge-ghost' };
@@ -149,7 +162,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
   const isCreator = complaint.createdBy?._id === user.id;
   const isSubmitted = complaint.status === 'SUBMITTED';
   const isAdmin = user.role === 'admin';
-    const hasUpvoted = upvotes.some(id => {
+  const hasUpvoted = upvotes.some(id => {
     const voteId = typeof id === 'object' ? id._id : id;
     return voteId === user.id;
   });
@@ -168,6 +181,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                     className="input input-bordered input-sm rounded-none font-black text-lg tracking-tight uppercase w-full" 
                     value={editData.title} 
                     onChange={(e) => setEditData({...editData, title: e.target.value})} 
+                    disabled={saving}
                   />
                 ) : (
                   <h3 className="font-black text-xl tracking-tight uppercase truncate">{complaint.title}</h3>
@@ -183,24 +197,31 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
             <div className="flex items-center gap-2 shrink-0">
               <button 
                 onClick={handleUpvote} 
-                disabled={upvoting || isEditing}
+                disabled={upvoting || isEditing || saving || deleting}
                 className={`btn btn-sm rounded-none gap-1.5 font-bold uppercase tracking-wider text-xs ${hasUpvoted ? 'btn-primary' : 'btn-ghost border-base-300'}`}
                 title="Me Too"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-                </svg>
-                {upvotes.length}
+                {upvoting ? (
+                  <span className="loading loading-spinner loading-xs"></span>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                    </svg>
+                    {upvotes.length}
+                  </>
+                )}
               </button>
-              <button onClick={onClose} className="btn btn-sm btn-ghost btn-square rounded-none">✕</button>
+              <button onClick={onClose} className="btn btn-sm btn-ghost btn-square rounded-none" disabled={saving || deleting}>✕</button>
             </div>
           </div>
 
-         {/* TABS */}
+          {/* TABS */}
           <div className="flex border-b border-base-300 bg-base-200/20">
             <button 
               onClick={() => setActiveTab('details')} 
               className={`px-4 sm:px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors relative ${activeTab === 'details' ? 'text-primary' : 'text-base-content/60 hover:text-base-content'}`}
+              disabled={saving || deleting}
             >
               Details
               {activeTab === 'details' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
@@ -208,6 +229,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
             <button 
               onClick={() => setActiveTab('comments')} 
               className={`px-4 sm:px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'comments' ? 'text-primary' : 'text-base-content/60 hover:text-base-content'}`}
+              disabled={saving || deleting}
             >
               Comments
               {comments.length > 0 && <span className={`badge badge-sm rounded-none ${activeTab === 'comments' ? 'badge-primary' : 'badge-ghost'}`}>{comments.length}</span>}
@@ -232,6 +254,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                       className="textarea textarea-bordered rounded-none h-32 bg-base-200/40" 
                       value={editData.description} 
                       onChange={(e) => setEditData({...editData, description: e.target.value})} 
+                      disabled={saving}
                     />
                   ) : (
                     <p className="text-base leading-relaxed bg-base-200/40 p-4 border border-base-300 rounded-none whitespace-pre-wrap">{complaint.description}</p>
@@ -249,7 +272,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                         <p className="text-sm font-medium truncate">{complaint.attachment.filename}</p>
                         <p className="text-xs text-base-content/50">{(complaint.attachment.size / 1024).toFixed(1)} KB</p>
                       </div>
-                      <button onClick={handleViewAttachment} className="btn btn-sm btn-primary rounded-none shrink-0">
+                      <button onClick={handleViewAttachment} className="btn btn-sm btn-primary rounded-none shrink-0" disabled={saving || deleting}>
                         View
                       </button>
                     </div>
@@ -260,7 +283,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-base-300">
                     <div className="flex flex-col gap-2">
                       <span className="text-xs uppercase font-bold text-base-content/50 tracking-wider">Status</span>
-                      <select className="select select-bordered select-sm rounded-none w-full" value={complaint.status} onChange={(e) => handleFieldChange('status', e.target.value)} disabled={user.role === 'user' || isLocked}>
+                      <select className="select select-bordered select-sm rounded-none w-full" value={complaint.status} onChange={(e) => handleFieldChange('status', e.target.value)} disabled={user.role === 'user' || isLocked || saving || deleting}>
                         <option value="SUBMITTED">SUBMITTED</option>
                         <option value="ASSIGNED">ASSIGNED</option>
                         <option value="IN_PROGRESS">IN_PROGRESS</option>
@@ -270,7 +293,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                     </div>
                     <div className="flex flex-col gap-2">
                       <span className="text-xs uppercase font-bold text-base-content/50 tracking-wider">Priority</span>
-                      <select className="select select-bordered select-sm rounded-none w-full" value={complaint.priority} onChange={(e) => handleFieldChange('priority', e.target.value)} disabled={user.role !== 'admin' || isLocked}>
+                      <select className="select select-bordered select-sm rounded-none w-full" value={complaint.priority} onChange={(e) => handleFieldChange('priority', e.target.value)} disabled={user.role !== 'admin' || isLocked || saving || deleting}>
                         <option value="LOW">LOW</option>
                         <option value="MEDIUM">MEDIUM</option>
                         <option value="HIGH">HIGH</option>
@@ -280,12 +303,12 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                     <div className="flex flex-col gap-2">
                       <span className="text-xs uppercase font-bold text-base-content/50 tracking-wider">Assigned To</span>
                       {user.role === 'admin' ? (
-                        <select className="select select-bordered select-sm rounded-none w-full" value={complaint.assignedTo?._id || ''} onChange={(e) => handleFieldChange('assignedTo', e.target.value)} disabled={isLocked}>
+                        <select className="select select-bordered select-sm rounded-none w-full" value={complaint.assignedTo?._id || ''} onChange={(e) => handleFieldChange('assignedTo', e.target.value)} disabled={isLocked || saving || deleting}>
                           <option value="">Unassigned</option>
                           {staffList.map(staff => <option key={staff._id} value={staff._id}>{staff.name}</option>)}
                         </select>
                       ) : user.role === 'staff' && !complaint.assignedTo && !isLocked ? (
-                        <button onClick={() => handleFieldChange('assignedTo', user.id)} className="btn btn-primary btn-sm rounded-none w-full">Assign to Me</button>
+                        <button onClick={() => handleFieldChange('assignedTo', user.id)} className="btn btn-primary btn-sm rounded-none w-full" disabled={saving || deleting}>Assign to Me</button>
                       ) : (
                         <div className="flex items-center h-8 text-sm font-medium px-2 border border-base-300 rounded-none bg-base-200/20">{complaint.assignedTo?.name || 'Unassigned'}</div>
                       )}
@@ -316,16 +339,20 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
 
                 <div className="flex flex-wrap gap-3 pt-4 border-t border-base-300">
                   {isCreator && isSubmitted && !isEditing && (
-                    <button onClick={() => setIsEditing(true)} className="btn btn-sm btn-outline rounded-none">Edit Complaint</button>
+                    <button onClick={() => setIsEditing(true)} className="btn btn-sm btn-outline rounded-none" disabled={saving || deleting}>Edit Complaint</button>
                   )}
                   {isEditing && (
                     <>
-                      <button onClick={handleSaveEdit} className="btn btn-sm btn-primary rounded-none">Save Changes</button>
-                      <button onClick={() => { setIsEditing(false); setEditData({ title: complaint.title, description: complaint.description }); }} className="btn btn-sm btn-ghost rounded-none">Cancel</button>
+                      <button onClick={handleSaveEdit} className="btn btn-sm btn-primary rounded-none" disabled={saving}>
+                        {saving ? <span className="loading loading-spinner loading-xs"></span> : 'Save Changes'}
+                      </button>
+                      <button onClick={() => { setIsEditing(false); setEditData({ title: complaint.title, description: complaint.description }); }} className="btn btn-sm btn-ghost rounded-none" disabled={saving}>Cancel</button>
                     </>
                   )}
                   {((isCreator && isSubmitted) || isAdmin) && !isEditing && (
-                    <button onClick={() => setShowDeleteConfirm(true)} className="btn btn-sm btn-error btn-outline rounded-none ml-auto">Delete</button>
+                    <button onClick={() => setShowDeleteConfirm(true)} className="btn btn-sm btn-error btn-outline rounded-none ml-auto" disabled={deleting}>
+                      {deleting ? <span className="loading loading-spinner loading-xs"></span> : 'Delete'}
+                    </button>
                   )}
                 </div>
 
@@ -334,8 +361,10 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                     <span className="font-bold text-sm">Are you sure you want to delete this complaint?</span>
                     <span className="text-xs">This action cannot be undone. All comments will also be deleted.</span>
                     <div className="flex gap-2 mt-2">
-                      <button onClick={handleDelete} className="btn btn-xs btn-error rounded-none">Yes, Delete</button>
-                      <button onClick={() => setShowDeleteConfirm(false)} className="btn btn-xs btn-ghost rounded-none">Cancel</button>
+                      <button onClick={handleDelete} className="btn btn-xs btn-error rounded-none" disabled={deleting}>
+                        {deleting ? <span className="loading loading-spinner loading-xs"></span> : 'Yes, Delete'}
+                      </button>
+                      <button onClick={() => setShowDeleteConfirm(false)} className="btn btn-xs btn-ghost rounded-none" disabled={deleting}>Cancel</button>
                     </div>
                   </div>
                 )}
@@ -366,7 +395,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                   )}
                 </div>
                 <form onSubmit={handleAddComment} className="space-y-3 pt-4 border-t border-base-300">
-                  <textarea className="textarea textarea-bordered w-full rounded-none h-24 text-sm" placeholder="Write a comment..." value={newComment} onChange={(e) => setNewComment(e.target.value)} required />
+                  <textarea className="textarea textarea-bordered w-full rounded-none h-24 text-sm" placeholder="Write a comment..." value={newComment} onChange={(e) => setNewComment(e.target.value)} required disabled={loading} />
                   <div className="flex justify-end">
                     <button type="submit" className="btn btn-primary btn-sm rounded-none" disabled={loading || !newComment.trim()}>
                       {loading ? <span className="loading loading-spinner loading-xs"></span> : 'Post Comment'}
@@ -377,7 +406,7 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
             )}
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop"><button onClick={onClose}>close</button></form>
+        <form method="dialog" className="modal-backdrop"><button onClick={onClose} disabled={saving || deleting}>close</button></form>
       </dialog>
 
       {pendingStatusChange && (

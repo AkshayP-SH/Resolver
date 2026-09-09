@@ -17,7 +17,8 @@ export default function AdminDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [reloadTrigger, setReloadTrigger] = useState(0); // Automatic refresh trigger
+  const [reloadTrigger, setReloadTrigger] = useState(0); 
+  const [updatingId, setUpdatingId] = useState(null); // <-- ADDED: Tracks which upvote button is loading
   
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -54,23 +55,31 @@ export default function AdminDashboard() {
 
   const refreshAll = () => { 
     fetchComplaints(); 
-    setReloadTrigger(prev => prev + 1); // Force child components to re-fetch
+    setReloadTrigger(prev => prev + 1); 
     if (window.refreshNotifications) window.refreshNotifications(); 
   };
 
   const handleUpvote = async (e, complaintId) => {
     e.stopPropagation();
-    try { await upvoteComplaint(complaintId); await refreshAll(); showToast('Upvote updated', 'success'); } 
-    catch (error) { showToast('Failed to upvote', 'error'); }
+    setUpdatingId(complaintId); // 1. Lock button immediately
+    try { 
+      await upvoteComplaint(complaintId); 
+      await refreshAll(); 
+      showToast('Upvote updated', 'success'); 
+    } catch (error) { 
+      showToast('Failed to upvote', 'error'); 
+    } finally {
+      setUpdatingId(null); // 2. Unlock immediately after response
+    }
   };
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'overview': return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
-      case 'all-complaints': return <AdminAllComplaints reloadTrigger={reloadTrigger} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'overview': return <AdminOverview complaints={complaints} user={user} updatingId={updatingId} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'all-complaints': return <AdminAllComplaints reloadTrigger={reloadTrigger} updatingId={updatingId} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
       case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
       case 'user-management': return <UserManagementView users={users} loading={loadingUsers} onSelectUser={setSelectedUser} />;
-      default: return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      default: return <AdminOverview complaints={complaints} user={user} updatingId={updatingId} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
     }
   };
 
@@ -116,7 +125,7 @@ export default function AdminDashboard() {
   );
 }
 
-function AdminOverview({ complaints, user, onSelectComplaint, onUpvote }) {
+function AdminOverview({ complaints, user, updatingId, onSelectComplaint, onUpvote }) {
   const total = complaints.length;
   const submitted = complaints.filter(c => c.status === 'SUBMITTED').length;
   const inProgress = complaints.filter(c => c.status === 'IN_PROGRESS').length;
@@ -163,9 +172,19 @@ function AdminOverview({ complaints, user, onSelectComplaint, onUpvote }) {
                         <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
                         <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
                         <td className="bg-transparent border-r-0 border-l-0 p-2">
-                          <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
-                            <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                            <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                          <button 
+                            disabled={updatingId === complaint._id}
+                            onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} 
+                            className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}
+                          >
+                            {updatingId === complaint._id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              <>
+                                <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                              </>
+                            )}
                           </button>
                         </td>
                       </tr>
@@ -181,7 +200,7 @@ function AdminOverview({ complaints, user, onSelectComplaint, onUpvote }) {
   );
 }
 
-function AdminAllComplaints({ reloadTrigger, onSelectComplaint, onUpvote }) {
+function AdminAllComplaints({ reloadTrigger, updatingId, onSelectComplaint, onUpvote }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -201,7 +220,7 @@ function AdminAllComplaints({ reloadTrigger, onSelectComplaint, onUpvote }) {
       } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
     };
     fetchFiltered();
-  }, [filters, page, reloadTrigger]); // <-- Added reloadTrigger to auto-refresh
+  }, [filters, page, reloadTrigger]);
 
   return (
     <div>
@@ -241,9 +260,19 @@ function AdminAllComplaints({ reloadTrigger, onSelectComplaint, onUpvote }) {
                           <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
                           <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
                           <td className="bg-transparent border-r-0 border-l-0 p-2">
-                            <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
-                              <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                              <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                            <button 
+                              disabled={updatingId === complaint._id}
+                              onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} 
+                              className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}
+                            >
+                              {updatingId === complaint._id ? (
+                                <span className="loading loading-spinner loading-xs"></span>
+                              ) : (
+                                <>
+                                  <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                  <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                                </>
+                              )}
                             </button>
                           </td>
                         </tr>

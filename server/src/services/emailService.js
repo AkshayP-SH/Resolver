@@ -15,7 +15,7 @@ const sendBrevoEmail = async (toEmail, subject, htmlContent) => {
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'api-key': process.env.BREVO_API_KEY // Ensure this is your Brevo v3 API Key, not just SMTP password
+            'api-key': process.env.BREVO_API_KEY 
         },
         body: JSON.stringify(payload)
     });
