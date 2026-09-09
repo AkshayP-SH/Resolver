@@ -11,6 +11,7 @@ import userRouter from './src/routers/user.router.js';
 import publicRouter from './src/routers/public.router.js';
 import helmet from 'helmet';
 import { apiLimiter, authLimiter } from "./src/middleware/rateLimiter.js";
+import notificationRouter from './src/routers/notification.router.js';
 
 
 const corsOptions = {
@@ -37,6 +38,7 @@ async function startserver() {
     app.use('/api/complaints', protect, complaintRouter);
     app.use('/api/comments',protect, commentRouter);
     app.use('/api/users', protect, userRouter);
+    app.use('/api/notifications', notificationRouter);
 
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

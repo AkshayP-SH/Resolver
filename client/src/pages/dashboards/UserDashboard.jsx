@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
-import { getComplaints } from '../../services/api';
+import { getComplaints, upvoteComplaint } from '../../services/api';
 import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
 import FilterBar from '../../components/FilterBar';
@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../services/toast';
 import { logout } from '../../services/api';
+import NotificationBell from '../../components/NotificationBell';
 
 export default function UserDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -52,15 +53,31 @@ export default function UserDashboard() {
     } finally { setLoading(false); }
   };
 
+  const refreshAll = () => {
+    fetchComplaints();
+    if (window.refreshNotifications) window.refreshNotifications();
+  };
+
+  const handleUpvote = async (e, complaintId) => {
+    e.stopPropagation();
+    try {
+      await upvoteComplaint(complaintId);
+      await refreshAll();
+      showToast('Upvote updated', 'success');
+    } catch (error) {
+      showToast('Failed to upvote', 'error');
+    }
+  };
+
   const myComplaints = complaints.filter((c) => c.createdBy && c.createdBy._id === user.id);
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'all-complaints': return <AllComplaintsView onSelectComplaint={setSelectedComplaint} />;
-      case 'my-complaints': return <MyComplaintsView complaints={myComplaints} loading={loading} onSelectComplaint={setSelectedComplaint} />;
-      case 'new-complaint': return <NewComplaintForm onCreated={fetchComplaints} />;
-      case 'overview': return <DashboardOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} />;
-      default: return <DashboardOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} />;
+      case 'all-complaints': return <AllComplaintsView onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'my-complaints': return <MyComplaintsView complaints={myComplaints} loading={loading} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
+      case 'overview': return <DashboardOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      default: return <DashboardOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
     }
   };
 
@@ -88,6 +105,8 @@ export default function UserDashboard() {
         </div>
 
         <div className="flex-none flex items-center gap-4">
+          <NotificationBell /> 
+
           <div className="dropdown dropdown-end">
            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm min-h-11 rounded-none flex items-center gap-2">
               <span className="text-sm font-medium truncate max-w-30 sm:max-w-none">{user.name || user.email}</span>
@@ -108,7 +127,8 @@ export default function UserDashboard() {
               <li><Link to="/profile" className="font-medium">Manage Profile</Link></li>
               <div className="divider my-0"></div>
               <li>
-                <button className="text-error" onClick={async () => { await logout(); window.location.href = '/'; }}>Logout</button>              </li>
+                <button className="text-error" onClick={async () => { await logout(); window.location.href = '/'; }}>Logout</button>
+              </li>
             </ul>
           </div>
         </div>
@@ -124,19 +144,21 @@ export default function UserDashboard() {
         <ComplaintDetailModal 
           complaint={selectedComplaint} 
           onClose={() => setSelectedComplaint(null)} 
-          onUpdate={fetchComplaints} 
+          onUpdate={refreshAll} 
         />
       )}
     </div>
   );
 }
 
-function AllComplaintsView({ onSelectComplaint }) {
+function AllComplaintsView({ onSelectComplaint, onUpvote }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1 });
+
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => { setPage(1); }, [filters]);
 
@@ -179,16 +201,36 @@ function AllComplaintsView({ onSelectComplaint }) {
                     </tr>
                   </thead>
                   <tbody>
-                      {complaints.map((complaint) => (
-                      <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                        <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
-                        <td className="whitespace-nowrap">{complaint.category}</td>
-                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                        <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
-                        <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
+                    {complaints.map((complaint) => {
+                      const hasUpvoted = complaint.upvotes && complaint.upvotes.includes(user.id);
+                      return (
+                        <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors relative" onClick={() => onSelectComplaint(complaint)}>
+                          <td className="font-semibold whitespace-nowrap pr-16">{complaint.title}</td>
+                          <td className="whitespace-nowrap">{complaint.category}</td>
+                          <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                          <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                          <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
+                          <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
+                          
+                          {/* Upvote Badge - Positioned at right edge */}
+                          <td className="absolute right-0 top-1/2 -translate-y-1/2 px-4">
+                            <button
+                              onClick={(e) => onUpvote(e, complaint._id)}
+                              className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-full border transition-all duration-200 hover:scale-110 ${
+                                hasUpvoted 
+                                  ? 'bg-primary border-primary text-white' 
+                                  : 'bg-base-100 border-base-300 text-base-content/60 hover:border-primary hover:text-primary'
+                              }`}
+                            >
+                              <svg className="w-4 h-4" fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                              <span className="text-xs font-bold mt-0.5">{complaint.upvotes?.length || 0}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -201,10 +243,12 @@ function AllComplaintsView({ onSelectComplaint }) {
   );
 }
 
-function MyComplaintsView({ complaints, loading, onSelectComplaint }) {
+function MyComplaintsView({ complaints, loading, onSelectComplaint, onUpvote }) {
   const [filters, setFilters] = useState({});
   const [page, setPage] = useState(1);
   const LIMIT = 10;
+
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => { setPage(1); }, [filters]);
 
@@ -253,15 +297,35 @@ function MyComplaintsView({ complaints, loading, onSelectComplaint }) {
                     </tr>
                   </thead>
                   <tbody>
-                      {paged.map((complaint) => (
-                      <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                        <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
-                        <td className="whitespace-nowrap">{complaint.category}</td>
-                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                        <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
+                    {paged.map((complaint) => {
+                      const hasUpvoted = complaint.upvotes && complaint.upvotes.includes(user.id);
+                      return (
+                        <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors relative" onClick={() => onSelectComplaint(complaint)}>
+                          <td className="font-semibold whitespace-nowrap pr-16">{complaint.title}</td>
+                          <td className="whitespace-nowrap">{complaint.category}</td>
+                          <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                          <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                          <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
+                          
+                          {/* Upvote Badge - Positioned at right edge */}
+                          <td className="absolute right-0 top-1/2 -translate-y-1/2 px-4">
+                            <button
+                              onClick={(e) => onUpvote(e, complaint._id)}
+                              className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-full border transition-all duration-200 hover:scale-110 ${
+                                hasUpvoted 
+                                  ? 'bg-primary border-primary text-white' 
+                                  : 'bg-base-100 border-base-300 text-base-content/60 hover:border-primary hover:text-primary'
+                              }`}
+                            >
+                              <svg className="w-4 h-4" fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                              <span className="text-xs font-bold mt-0.5">{complaint.upvotes?.length || 0}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -274,7 +338,7 @@ function MyComplaintsView({ complaints, loading, onSelectComplaint }) {
   );
 }
 
-function DashboardOverview({ complaints, user, onSelectComplaint }) {
+function DashboardOverview({ complaints, user, onSelectComplaint, onUpvote }) {
   const total = complaints.length;
   const pending = complaints.filter(c => c.status === 'SUBMITTED').length;
   const inProgress = complaints.filter(c => c.status === 'IN_PROGRESS').length;
@@ -305,14 +369,34 @@ function DashboardOverview({ complaints, user, onSelectComplaint }) {
                   </tr>
                 </thead>
                 <tbody>
-                   {complaints.slice(0, 5).map((complaint) => (
-                    <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                      <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
-                      <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                      <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                      <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
+                  {complaints.slice(0, 5).map((complaint) => {
+                    const hasUpvoted = complaint.upvotes && complaint.upvotes.includes(user.id);
+                    return (
+                      <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors relative" onClick={() => onSelectComplaint(complaint)}>
+                        <td className="font-semibold whitespace-nowrap pr-16">{complaint.title}</td>
+                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                        <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
+                        
+                        {/* Upvote Badge - Positioned at right edge */}
+                        <td className="absolute right-0 top-1/2 -translate-y-1/2 px-4">
+                          <button
+                            onClick={(e) => onUpvote(e, complaint._id)}
+                            className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-full border transition-all duration-200 hover:scale-110 ${
+                              hasUpvoted 
+                                ? 'bg-primary border-primary text-white' 
+                                : 'bg-base-100 border-base-300 text-base-content/60 hover:border-primary hover:text-primary'
+                            }`}
+                          >
+                            <svg className="w-4 h-4" fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                            <span className="text-xs font-bold mt-0.5">{complaint.upvotes?.length || 0}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

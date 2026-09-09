@@ -147,3 +147,26 @@ export const resetPassword = async (token, newPassword) => {
     body: JSON.stringify({ token, newPassword }),
   });
 };
+
+export const getNotifications = async () => {
+  return apiFetch(`${API_URL}/api/notifications`);
+};
+
+export const markNotificationAsRead = async (id) => {
+  return apiFetch(`${API_URL}/api/notifications/${id}/read`, {
+    method: 'PUT',
+  });
+};
+
+export const markAllNotificationsAsRead = async () => {
+  return apiFetch(`${API_URL}/api/notifications/mark-all-read`, {
+    method: 'PUT',
+  });
+};
+
+export const updateNotificationPreference = async (emailNotifications) => {
+  return apiFetch(`${API_URL}/api/users/me/notifications`, {
+    method: 'PUT',
+    body: JSON.stringify({ emailNotifications }),
+  });
+};

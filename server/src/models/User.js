@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema({
     password: { type:String, maxlength: 128, required: true, minlength: 6},
     role: {type: String, enum: ['user', 'admin', 'staff'], default:'user',message:'{VALUE} is not a valid role'},
     tokenVersion: { type: Number, default: 1 },
+    emailNotifications: { type: Boolean, default: true },
     resetToken: { type: String },
     resetTokenExpiry: { type: Date }
 },

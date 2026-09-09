@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { logout } from '../../services/api';
 import { showToast } from '../../services/toast';
+import NotificationBell from '../../components/NotificationBell';
 
 export default function AdminDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -97,6 +98,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex-none flex items-center gap-4">
+          <NotificationBell /> 
           <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-sm min-h-11 rounded-none flex items-center gap-2">
             <span className="text-sm font-medium truncate max-w-30 sm:max-w-none">{user.name || user.email}</span>   

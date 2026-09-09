@@ -3,6 +3,7 @@
     import Comment from '../models/Comment.js';
     import multer from 'multer';
     import { upload } from '../middleware/uploadMiddleware.js';
+    import { createNotification, sendEmailNotification } from '../services/notificationService.js';
 
     const router = express.Router();
 
@@ -36,7 +37,7 @@
         }
     })
 
-router.get('/', async (req, res) => {
+    router.get('/', async (req, res) => {
     try {
         const { status, category, search, sort, mine, page, limit } = req.query;
         const filter = {};
@@ -105,7 +106,7 @@ router.get('/', async (req, res) => {
     }
     });
 
-    router.put('/:id', async (req, res) => {
+        router.put('/:id', async (req, res) => {
         try {
             const complaint = await Complaint.findById(req.params.id);
             if (!complaint) {
@@ -117,7 +118,10 @@ router.get('/', async (req, res) => {
 
             const { title, description, status, priority, assignedTo, explanation } = req.body;
 
-            if (status && status !== complaint.status) {
+            const originalStatus = complaint.status;
+            const originalAssignedTo = complaint.assignedTo ? complaint.assignedTo.toString() : null;
+
+            if (status && status !== originalStatus) {
                 complaint.statusHistory.push({
                     status: status,
                     changedBy: req.user._id,
@@ -176,6 +180,34 @@ router.get('/', async (req, res) => {
                 { path: 'assignedTo', select: 'name email role' },
                 { path: 'statusHistory.changedBy', select: 'name email role' }
             ]);
+
+            if (assignedTo && assignedTo !== originalAssignedTo && assignedTo !== populated.createdBy._id.toString()) {
+                await createNotification(
+                    assignedTo,
+                    'ASSIGNED',
+                    `You have been assigned to complaint: "${populated.title}"`,
+                    populated._id
+                );
+                await sendEmailNotification(
+                    assignedTo,
+                    'New Complaint Assignment - Resolver',
+                    `<p>You have been assigned to a new complaint: <strong>${populated.title}</strong></p>`
+                );
+            }
+
+            if (status && status !== originalStatus) {
+                await createNotification(
+                    populated.createdBy._id,
+                    'STATUS_CHANGE',
+                    `Your complaint "${populated.title}" status changed to ${status}`,
+                    populated._id
+                );
+                await sendEmailNotification(
+                    populated.createdBy._id,
+                    'Complaint Status Updated - Resolver',
+                    `<p>Your complaint <strong>${populated.title}</strong> status has been updated to <strong>${status}</strong>.</p>`
+                );
+            }
 
             res.json({ message: 'Complaint updated successfully', complaint: populated });
 
