@@ -10,6 +10,8 @@ import Profile from './pages/Profile.jsx'
 import NotFound from './pages/NotFound.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import ToastContainer from './components/Toast.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 import './App.css'
 
 function App() {
@@ -23,6 +25,8 @@ function App() {
             <Route element={<GuestRoute />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
             </Route>
 
             <Route element={<ProtectedRoute />}>

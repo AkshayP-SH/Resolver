@@ -110,6 +110,12 @@ export default function Login() {
               </button>
             </form>
 
+            <p className="text-right mt-2 animate-fade-in-up delay-2">
+              <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline transition-all ">
+                Forgot password?
+              </Link>
+            </p>
+
             <p className="text-center text-base-content/60 animate-fade-in-up delay-2">
               Don't have an account?{' '}
               <Link to="/register" className="font-bold text-primary hover:underline transition-all">
