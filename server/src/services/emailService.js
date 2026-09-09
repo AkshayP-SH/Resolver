@@ -1,27 +1,46 @@
-import * as Brevo from "@getbrevo/brevo";
+import nodemailer from 'nodemailer';
 import User from '../models/User.js';
 
-const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-
-const sendEmail = async (to, subject, html) => {
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
-    sendSmtpEmail.to = [{ email: to }];
-    sendSmtpEmail.sender = { email: process.env.BREVO_SENDER_EMAIL }; 
-    sendSmtpEmail.subject = subject;
-    sendSmtpEmail.htmlContent = html;
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
-};
+// Brevo SMTP Transporter
+const transporter = nodemailer.createTransport({
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.BREVO_SENDER_EMAIL,
+        pass: process.env.BREVO_API_KEY  // Use your Brevo API key as the SMTP password
+    }
+});
 
 export const sendPasswordResetEmail = async (email, resetToken) => {
     const resetUrl = `${process.env.CLIENT_ORIGIN}/reset-password/${resetToken}`;
-    await sendEmail(email, 'Password Reset', `<a href="${resetUrl}">Reset Password</a>`);
+    
+    await transporter.sendMail({
+        from: `"Resolver App" <${process.env.BREVO_SENDER_EMAIL}>`,
+        to: email,
+        subject: 'Password Reset - Resolver',
+        html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>Password Reset Request</h2>
+                <p>Click below to reset your password:</p>
+                <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px;">Reset Password</a>
+            </div>
+        `
+    });
 };
 
 export const sendEmailNotification = async (userId, subject, htmlContent) => {
     try {
         const user = await User.findById(userId);
         if (!user || user.emailNotifications === false) return;
-        await sendEmail(user.email, subject, htmlContent);
-    } catch (error) { console.error('Email error:', error); }
+        
+        await transporter.sendMail({
+            from: `"Resolver App" <${process.env.BREVO_SENDER_EMAIL}>`,
+            to: user.email,
+            subject: subject,
+            html: htmlContent
+        });
+    } catch (error) {
+        console.error('Failed to send email notification:', error);
+    }
 };

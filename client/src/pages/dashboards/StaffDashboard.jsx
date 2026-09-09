@@ -16,6 +16,7 @@ export default function StaffDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0); // Automatic refresh trigger
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -38,7 +39,11 @@ export default function StaffDashboard() {
     } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
   };
 
-  const refreshAll = () => { fetchComplaints(); if (window.refreshNotifications) window.refreshNotifications(); };
+  const refreshAll = () => { 
+    fetchComplaints(); 
+    setReloadTrigger(prev => prev + 1); // Force child components to re-fetch
+    if (window.refreshNotifications) window.refreshNotifications(); 
+  };
 
   const handleUpvote = async (e, complaintId) => {
     e.stopPropagation();
@@ -67,7 +72,7 @@ export default function StaffDashboard() {
   const renderPage = () => {
     switch (currentPage) {
       case 'overview': return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
-      case 'all-complaints': return <AllComplaintsView onAssign={handleAssignToMe} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'all-complaints': return <AllComplaintsView reloadTrigger={reloadTrigger} onAssign={handleAssignToMe} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
       case 'assigned-to-me': return <AssignedToMeView complaints={assignedToMe} loading={loading} onStatusChange={handleStatusChange} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
       case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
       default: return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
@@ -163,7 +168,7 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint, onUp
   );
 }
 
-function AllComplaintsView({ onAssign, onSelectComplaint, onUpvote }) {
+function AllComplaintsView({ reloadTrigger, onAssign, onSelectComplaint, onUpvote }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -174,11 +179,15 @@ function AllComplaintsView({ onAssign, onSelectComplaint, onUpvote }) {
   useEffect(() => { setPage(1); }, [filters]);
   useEffect(() => {
     const fetchFiltered = async () => {
-      try { setLoading(true); const data = await getComplaints({ ...filters, page, limit: 10 }); setComplaints(Array.isArray(data) ? data : (data.complaints || [])); if (data.pagination) setPagination(data.pagination); } 
-      catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
+      try { 
+        setLoading(true); 
+        const data = await getComplaints({ ...filters, page, limit: 10 }); 
+        setComplaints(Array.isArray(data) ? data : (data.complaints || [])); 
+        if (data.pagination) setPagination(data.pagination); 
+      } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
     };
     fetchFiltered();
-  }, [filters, page]);
+  }, [filters, page, reloadTrigger]); // <-- Added reloadTrigger to auto-refresh
 
   return (
     <div>

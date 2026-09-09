@@ -17,6 +17,7 @@ export default function AdminDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0); // Automatic refresh trigger
   
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -51,7 +52,11 @@ export default function AdminDashboard() {
     } catch (error) { console.error('Failed to fetch users:', error); setUsers([]); } finally { setLoadingUsers(false); }
   };
 
-  const refreshAll = () => { fetchComplaints(); if (window.refreshNotifications) window.refreshNotifications(); };
+  const refreshAll = () => { 
+    fetchComplaints(); 
+    setReloadTrigger(prev => prev + 1); // Force child components to re-fetch
+    if (window.refreshNotifications) window.refreshNotifications(); 
+  };
 
   const handleUpvote = async (e, complaintId) => {
     e.stopPropagation();
@@ -62,7 +67,7 @@ export default function AdminDashboard() {
   const renderPage = () => {
     switch (currentPage) {
       case 'overview': return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
-      case 'all-complaints': return <AdminAllComplaints onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'all-complaints': return <AdminAllComplaints reloadTrigger={reloadTrigger} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
       case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
       case 'user-management': return <UserManagementView users={users} loading={loadingUsers} onSelectUser={setSelectedUser} />;
       default: return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
@@ -176,7 +181,7 @@ function AdminOverview({ complaints, user, onSelectComplaint, onUpvote }) {
   );
 }
 
-function AdminAllComplaints({ onSelectComplaint, onUpvote }) {
+function AdminAllComplaints({ reloadTrigger, onSelectComplaint, onUpvote }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -196,7 +201,7 @@ function AdminAllComplaints({ onSelectComplaint, onUpvote }) {
       } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
     };
     fetchFiltered();
-  }, [filters, page]);
+  }, [filters, page, reloadTrigger]); // <-- Added reloadTrigger to auto-refresh
 
   return (
     <div>
