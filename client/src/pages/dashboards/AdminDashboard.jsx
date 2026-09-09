@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
-import { getComplaints, getUsers } from '../../services/api';
+import { getComplaints, getUsers, upvoteComplaint } from '../../services/api';
 import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
 import UserDetailModal from '../../components/UserDetailModal';
@@ -25,22 +25,10 @@ export default function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem('user'));
 
   const menuItems = [
-    { 
-      id: 'overview', label: 'Overview', 
-      icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
-    },
-    { 
-      id: 'all-complaints', label: 'All Complaints', 
-      icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-17.5 0V6.75A2.25 2.25 0 014.5 4.5h15a2.25 2.25 0 012.25 2.25v6.75m-19.5 0v4.5A2.25 2.25 0 004.5 20.25h15a2.25 2.25 0 002.25-2.25v-4.5" /></svg>
-    },
-    { 
-      id: 'new-complaint', label: 'New Complaint', 
-      icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    },
-    { 
-      id: 'user-management', label: 'User Management', 
-      icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
-    },
+    { id: 'overview', label: 'Overview', icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg> },
+    { id: 'all-complaints', label: 'All Complaints', icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-17.5 0V6.75A2.25 2.25 0 014.5 4.5h15a2.25 2.25 0 012.25 2.25v6.75m-19.5 0v4.5A2.25 2.25 0 004.5 20.25h15a2.25 2.25 0 002.25-2.25v-4.5" /></svg> },
+    { id: 'new-complaint', label: 'New Complaint', icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+    { id: 'user-management', label: 'User Management', icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg> },
   ];
 
   const currentPageTitle = menuItems.find(i => i.id === currentPage)?.label || 'Dashboard';
@@ -52,10 +40,7 @@ export default function AdminDashboard() {
       setLoading(true);
       const data = await getComplaints({ limit: 1000 });
       setComplaints(Array.isArray(data) ? data : (data.complaints || []));
-    } catch (error) {
-      console.error('Failed to fetch complaints:', error);
-      setComplaints([]);
-    } finally { setLoading(false); }
+    } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
   };
 
   const fetchUsers = async () => {
@@ -63,31 +48,30 @@ export default function AdminDashboard() {
       setLoadingUsers(true);
       const data = await getUsers();
       setUsers(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-      setUsers([]);
-    } finally { setLoadingUsers(false); }
+    } catch (error) { console.error('Failed to fetch users:', error); setUsers([]); } finally { setLoadingUsers(false); }
+  };
+
+  const refreshAll = () => { fetchComplaints(); if (window.refreshNotifications) window.refreshNotifications(); };
+
+  const handleUpvote = async (e, complaintId) => {
+    e.stopPropagation();
+    try { await upvoteComplaint(complaintId); await refreshAll(); showToast('Upvote updated', 'success'); } 
+    catch (error) { showToast('Failed to upvote', 'error'); }
   };
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'overview': return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} />;
-      case 'all-complaints': return <AdminAllComplaints onSelectComplaint={setSelectedComplaint} />;
-      case 'new-complaint': return <NewComplaintForm onCreated={fetchComplaints} />;
+      case 'overview': return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'all-complaints': return <AdminAllComplaints onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
       case 'user-management': return <UserManagementView users={users} loading={loadingUsers} onSelectUser={setSelectedUser} />;
-      default: return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} />;
+      default: return <AdminOverview complaints={complaints} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-base-200 md:pl-16 transition-all duration-300">
-      <Sidebar
-        menuItems={menuItems}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        isMobileOpen={mobileMenuOpen}
-        onMobileClose={() => setMobileMenuOpen(false)}
-      />
+      <Sidebar menuItems={menuItems} currentPage={currentPage} onPageChange={setCurrentPage} isMobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       
       <nav className="sticky top-0 z-30 navbar bg-base-200/95 backdrop-blur-sm border-b border-base-300 px-4 md:px-8 py-4">
         <div className="flex-1 flex items-center gap-4">
@@ -102,7 +86,7 @@ export default function AdminDashboard() {
           <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-sm min-h-11 rounded-none flex items-center gap-2">
             <span className="text-sm font-medium truncate max-w-30 sm:max-w-none">{user.name || user.email}</span>   
-              <svg className="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+              <svg className="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
             </div>
             <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-none w-56 border border-base-300 z-50 mt-2">
               <li className="menu-title px-4 py-2">
@@ -121,13 +105,13 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto">{renderPage()}</div>
       </main>
 
-      {selectedComplaint && <ComplaintDetailModal complaint={selectedComplaint} onClose={() => setSelectedComplaint(null)} onUpdate={fetchComplaints} />}
+      {selectedComplaint && <ComplaintDetailModal complaint={selectedComplaint} onClose={() => setSelectedComplaint(null)} onUpdate={refreshAll} />}
       {selectedUser && <UserDetailModal user={selectedUser} onClose={() => setSelectedUser(null)} onUpdate={fetchUsers} />}
     </div>
   );
 }
 
-function AdminOverview({ complaints, user, onSelectComplaint }) {
+function AdminOverview({ complaints, user, onSelectComplaint, onUpvote }) {
   const total = complaints.length;
   const submitted = complaints.filter(c => c.status === 'SUBMITTED').length;
   const inProgress = complaints.filter(c => c.status === 'IN_PROGRESS').length;
@@ -159,19 +143,29 @@ function AdminOverview({ complaints, user, onSelectComplaint }) {
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Filed By</th>
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Assigned To</th>
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Date</th>
+                    <th className="bg-transparent border-r-0 w-20"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {complaints.slice(0, 5).map((complaint) => (
-                    <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                      <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
-                      <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                      <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                      <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
-                      <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
-                      <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
+                  {complaints.slice(0, 5).map((complaint) => {
+                    const hasUpvoted = complaint.upvotes && complaint.upvotes.includes(user.id);
+                    return (
+                      <tr key={complaint._id} className="group hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
+                        <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
+                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                        <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
+                        <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
+                        <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
+                        <td className="bg-transparent border-r-0 border-l-0 p-2">
+                          <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
+                            <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                            <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -182,12 +176,13 @@ function AdminOverview({ complaints, user, onSelectComplaint }) {
   );
 }
 
-function AdminAllComplaints({ onSelectComplaint }) {
+function AdminAllComplaints({ onSelectComplaint, onUpvote }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1 });
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => { setPage(1); }, [filters]);
 
@@ -198,10 +193,7 @@ function AdminAllComplaints({ onSelectComplaint }) {
         const data = await getComplaints({ ...filters, page, limit: 10 });
         setComplaints(Array.isArray(data) ? data : (data.complaints || []));
         if (data.pagination) setPagination(data.pagination);
-      } catch (error) {
-        console.error('Failed to fetch complaints:', error);
-        setComplaints([]);
-      } finally { setLoading(false); }
+      } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
     };
     fetchFiltered();
   }, [filters, page]);
@@ -228,20 +220,30 @@ function AdminAllComplaints({ onSelectComplaint }) {
                       <th className="uppercase text-[11px] tracking-widest text-base-content/60">Filed By</th>
                       <th className="uppercase text-[11px] tracking-widest text-base-content/60">Assigned To</th>
                       <th className="uppercase text-[11px] tracking-widest text-base-content/60">Date</th>
+                      <th className="bg-transparent border-r-0 w-20"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {complaints.map((complaint) => (
-                      <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                        <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
-                        <td className="whitespace-nowrap">{complaint.category}</td>
-                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                        <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
-                        <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
-                        <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
+                    {complaints.map((complaint) => {
+                      const hasUpvoted = complaint.upvotes && complaint.upvotes.includes(user.id);
+                      return (
+                        <tr key={complaint._id} className="group hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
+                          <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
+                          <td className="whitespace-nowrap">{complaint.category}</td>
+                          <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                          <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                          <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
+                          <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
+                          <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
+                          <td className="bg-transparent border-r-0 border-l-0 p-2">
+                            <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
+                              <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                              <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -291,15 +293,16 @@ function UserManagementView({ users, loading, onSelectUser }) {
 
 function PaginationFooter({ page, totalPages, total, onPageChange }) {
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-base-300 bg-base-200/30">      <span className="text-xs font-semibold uppercase tracking-widest text-base-content/50">Page {page} of {totalPages} · {total} total</span>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-base-300 bg-base-200/30">
+      <span className="text-xs font-semibold uppercase tracking-widest text-base-content/50">Page {page} of {totalPages} · {total} total</span>
       <div className="flex gap-2">
         <button disabled={page <= 1} onClick={() => onPageChange(page - 1)} className="btn btn-ghost btn-sm rounded-none disabled:opacity-30">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Prev
         </button>
         <button disabled={page >= totalPages} onClick={() => onPageChange(page + 1)} className="btn btn-ghost btn-sm rounded-none disabled:opacity-30">
           Next
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
     </div>

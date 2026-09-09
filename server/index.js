@@ -13,17 +13,25 @@ import helmet from 'helmet';
 import { apiLimiter, authLimiter } from "./src/middleware/rateLimiter.js";
 import notificationRouter from './src/routers/notification.router.js';
 
+const allowedOrigins = process.env.CLIENT_ORIGIN 
+    ? process.env.CLIENT_ORIGIN.split(',') 
+    : ['http://localhost:5173'];
 
-const corsOptions = {
-  origin: process.env.CLIENT_ORIGIN,
-  credentials: true
-}
 const app = express();
 app.set("trust proxy", 1);
 app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
-app.use(cors(corsOptions))
+app.use(cors({
+    origin: function(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 
 
 const PORT = process.env.PORT;

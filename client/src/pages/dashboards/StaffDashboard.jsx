@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
-import { getComplaints, updateComplaint } from '../../services/api';
+import { getComplaints, updateComplaint, upvoteComplaint } from '../../services/api';
 import ComplaintDetailModal from '../../components/ComplaintDetailModal';
 import NewComplaintForm from '../../components/NewComplaintForm';
 import FilterBar from '../../components/FilterBar';
@@ -20,22 +20,10 @@ export default function StaffDashboard() {
   const user = JSON.parse(localStorage.getItem('user'));
 
   const menuItems = [
-    { 
-      id: 'overview', label: 'Overview', 
-      icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
-    },
-    { 
-      id: 'all-complaints', label: 'All Complaints', 
-      icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-17.5 0V6.75A2.25 2.25 0 014.5 4.5h15a2.25 2.25 0 012.25 2.25v6.75m-19.5 0v4.5A2.25 2.25 0 004.5 20.25h15a2.25 2.25 0 002.25-2.25v-4.5" /></svg>
-    },
-    { 
-      id: 'assigned-to-me', label: 'Assigned to Me', 
-      icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-    },
-    { 
-      id: 'new-complaint', label: 'New Complaint', 
-      icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    },
+    { id: 'overview', label: 'Overview', icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg> },
+    { id: 'all-complaints', label: 'All Complaints', icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-17.5 0V6.75A2.25 2.25 0 014.5 4.5h15a2.25 2.25 0 012.25 2.25v6.75m-19.5 0v4.5A2.25 2.25 0 004.5 20.25h15a2.25 2.25 0 002.25-2.25v-4.5" /></svg> },
+    { id: 'assigned-to-me', label: 'Assigned to Me', icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg> },
+    { id: 'new-complaint', label: 'New Complaint', icon: <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
   ];
 
   const currentPageTitle = menuItems.find(i => i.id === currentPage)?.label || 'Dashboard';
@@ -47,10 +35,15 @@ export default function StaffDashboard() {
       setLoading(true);
       const data = await getComplaints({ limit: 1000 });
       setComplaints(Array.isArray(data) ? data : (data.complaints || []));
-    } catch (error) {
-      console.error('Failed to fetch complaints:', error);
-      setComplaints([]);
-    } finally { setLoading(false); }
+    } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
+  };
+
+  const refreshAll = () => { fetchComplaints(); if (window.refreshNotifications) window.refreshNotifications(); };
+
+  const handleUpvote = async (e, complaintId) => {
+    e.stopPropagation();
+    try { await upvoteComplaint(complaintId); await refreshAll(); showToast('Upvote updated', 'success'); } 
+    catch (error) { showToast('Failed to upvote', 'error'); }
   };
 
   const assignedToMe = complaints.filter((c) => c.assignedTo && c.assignedTo._id === user.id);
@@ -59,50 +52,36 @@ export default function StaffDashboard() {
     try {
       await updateComplaint(complaintId, { assignedTo: 'self', status: 'ASSIGNED' });
       showToast('Assigned to you', 'success');
-      fetchComplaints();
-    } catch (error) {
-      showToast('Failed to assign', 'error');
-    }
+      refreshAll();
+    } catch (error) { showToast('Failed to assign', 'error'); }
   };
 
   const handleStatusChange = async (complaintId, newStatus) => {
     try {
       await updateComplaint(complaintId, { status: newStatus });
       showToast(`Status updated to ${newStatus}`, 'success');
-      fetchComplaints();
-    } catch (error) {
-      showToast('Failed to update status', 'error');
-    }
+      refreshAll();
+    } catch (error) { showToast('Failed to update status', 'error'); }
   };
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'overview': return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} />;
-      case 'all-complaints': return <AllComplaintsView onAssign={handleAssignToMe} onSelectComplaint={setSelectedComplaint} />;
-      case 'assigned-to-me': return <AssignedToMeView complaints={assignedToMe} loading={loading} onStatusChange={handleStatusChange} onSelectComplaint={setSelectedComplaint} />;
-      case 'new-complaint': return <NewComplaintForm onCreated={fetchComplaints} />;
-      default: return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} />;
+      case 'overview': return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'all-complaints': return <AllComplaintsView onAssign={handleAssignToMe} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'assigned-to-me': return <AssignedToMeView complaints={assignedToMe} loading={loading} onStatusChange={handleStatusChange} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
+      default: return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-base-200 md:pl-16 transition-all duration-300">
-      <Sidebar
-        menuItems={menuItems}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        isMobileOpen={mobileMenuOpen}
-        onMobileClose={() => setMobileMenuOpen(false)}
-      />
-
+      <Sidebar menuItems={menuItems} currentPage={currentPage} onPageChange={setCurrentPage} isMobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <nav className="sticky top-0 z-30 navbar bg-base-200/95 backdrop-blur-sm border-b border-base-300 px-4 md:px-8 py-4">
         <div className="flex-1 flex items-center gap-4">
-          <button onClick={() => setMobileMenuOpen(true)} className="btn btn-ghost btn-sm btn-square rounded-none md:hidden">
-            <svg fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-          </button>
+          <button onClick={() => setMobileMenuOpen(true)} className="btn btn-ghost btn-sm btn-square rounded-none md:hidden"><svg fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
           <h1 className="text-xl md:text-2xl font-black tracking-tight text-base-content uppercase">{currentPageTitle}</h1>
         </div>
-
         <div className="flex-none flex items-center gap-4">
           <NotificationBell />
           <div className="dropdown dropdown-end">
@@ -111,10 +90,7 @@ export default function StaffDashboard() {
               <svg className="w-4 h-4 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
             </div>
             <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-none w-56 border border-base-300 z-50 mt-2">
-              <li className="menu-title px-4 py-2">
-                <span className="text-[10px] uppercase tracking-widest text-base-content/50 font-bold">Signed in as</span>
-                <span className={`badge badge-sm rounded-none mt-1 ${user.role === 'admin' ? 'badge-error' : user.role === 'staff' ? 'badge-warning' : 'badge-ghost'}`}>{user.role.toUpperCase()}</span>
-              </li>
+              <li className="menu-title px-4 py-2"><span className="text-[10px] uppercase tracking-widest text-base-content/50 font-bold">Signed in as</span><span className={`badge badge-sm rounded-none mt-1 ${user.role === 'admin' ? 'badge-error' : user.role === 'staff' ? 'badge-warning' : 'badge-ghost'}`}>{user.role.toUpperCase()}</span></li>
               <li><Link to="/profile" className="font-medium">Manage Profile</Link></li>
               <div className="divider my-0"></div>
               <li><button className="text-error" onClick={async () => { await logout(); window.location.href = '/'; }}>Logout</button></li>
@@ -122,19 +98,13 @@ export default function StaffDashboard() {
           </div>
         </div>
       </nav>
-
-      <main className="p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">{renderPage()}</div>
-      </main>
-
-      {selectedComplaint && (
-        <ComplaintDetailModal complaint={selectedComplaint} onClose={() => setSelectedComplaint(null)} onUpdate={fetchComplaints} />
-      )}
+      <main className="p-4 md:p-8"><div className="max-w-7xl mx-auto">{renderPage()}</div></main>
+      {selectedComplaint && <ComplaintDetailModal complaint={selectedComplaint} onClose={() => setSelectedComplaint(null)} onUpdate={refreshAll} />}
     </div>
   );
 }
 
-function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint }) {
+function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint, onUpvote }) {
   const total = complaints.length;
   const myAssigned = assignedToMe.length;
   const inProgress = assignedToMe.filter(c => c.status === 'IN_PROGRESS').length;
@@ -162,17 +132,27 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint }) {
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Status</th>
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Priority</th>
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Date</th>
+                    <th className="bg-transparent border-r-0 w-20"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {assignedToMe.filter(c => c.status !== 'RESOLVED' && c.status !== 'REJECTED').map((complaint) => (
-                    <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                      <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
-                      <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                      <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                      <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
+                  {assignedToMe.filter(c => c.status !== 'RESOLVED' && c.status !== 'REJECTED').map((complaint) => {
+                    const hasUpvoted = complaint.upvotes && complaint.upvotes.includes(user.id);
+                    return (
+                      <tr key={complaint._id} className="group hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
+                        <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
+                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                        <td className="whitespace-nowrap">{new Date(complaint.created_at).toLocaleDateString()}</td>
+                        <td className="bg-transparent border-r-0 border-l-0 p-2">
+                          <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
+                            <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                            <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -183,26 +163,19 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint }) {
   );
 }
 
-function AllComplaintsView({ onAssign, onSelectComplaint }) {
+function AllComplaintsView({ onAssign, onSelectComplaint, onUpvote }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1 });
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => { setPage(1); }, [filters]);
-
   useEffect(() => {
     const fetchFiltered = async () => {
-      try {
-        setLoading(true);
-        const data = await getComplaints({ ...filters, page, limit: 10 });
-        setComplaints(Array.isArray(data) ? data : (data.complaints || []));
-        if (data.pagination) setPagination(data.pagination);
-      } catch (error) {
-        console.error('Failed to fetch complaints:', error);
-        setComplaints([]);
-      } finally { setLoading(false); }
+      try { setLoading(true); const data = await getComplaints({ ...filters, page, limit: 10 }); setComplaints(Array.isArray(data) ? data : (data.complaints || [])); if (data.pagination) setPagination(data.pagination); } 
+      catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
     };
     fetchFiltered();
   }, [filters, page]);
@@ -212,11 +185,7 @@ function AllComplaintsView({ onAssign, onSelectComplaint }) {
       <FilterBar onFilterChange={setFilters} />
       <div className="card bg-base-100 shadow-sm rounded-none border border-base-300">
         <div className="card-body p-0">
-          {loading ? (
-            <LoadingSpinner />
-          ) : complaints.length === 0 ? (
-            <p className="text-center py-12 text-base-content/50 font-semibold">No complaints found.</p>
-          ) : (
+          {loading ? <LoadingSpinner /> : complaints.length === 0 ? <p className="text-center py-12 text-base-content/50 font-semibold">No complaints found.</p> : (
             <>
               <div className="overflow-x-auto">
                 <table className="table w-full">
@@ -229,26 +198,32 @@ function AllComplaintsView({ onAssign, onSelectComplaint }) {
                       <th className="uppercase text-[11px] tracking-widest text-base-content/60">Filed By</th>
                       <th className="uppercase text-[11px] tracking-widest text-base-content/60">Assigned To</th>
                       <th className="uppercase text-[11px] tracking-widest text-base-content/60">Action</th>
+                      <th className="bg-transparent border-r-0 w-20"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {complaints.map((complaint) => (
-                      <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                        <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
-                        <td className="whitespace-nowrap">{complaint.category}</td>
-                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                        <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
-                        <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
-                        <td className="whitespace-nowrap">
-                          {!complaint.assignedTo && (
-                            <button className="btn btn-primary btn-xs rounded-none" onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}>
-                              Assign to Me
+                    {complaints.map((complaint) => {
+                      const hasUpvoted = complaint.upvotes && complaint.upvotes.includes(user.id);
+                      return (
+                        <tr key={complaint._id} className="group hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
+                          <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
+                          <td className="whitespace-nowrap">{complaint.category}</td>
+                          <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                          <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                          <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
+                          <td className="whitespace-nowrap">{complaint.assignedTo?.name || 'Unassigned'}</td>
+                          <td className="whitespace-nowrap">
+                            {!complaint.assignedTo && <button className="btn btn-primary btn-xs rounded-none" onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}>Assign to Me</button>}
+                          </td>
+                          <td className="bg-transparent border-r-0 border-l-0 p-2">
+                            <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
+                              <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                              <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -261,18 +236,16 @@ function AllComplaintsView({ onAssign, onSelectComplaint }) {
   );
 }
 
-function AssignedToMeView({ complaints, loading, onSelectComplaint }) {
+function AssignedToMeView({ complaints, loading, onSelectComplaint, onUpvote }) {
   const [filters, setFilters] = useState({});
+  const user = JSON.parse(localStorage.getItem('user'));
 
   if (loading) return <LoadingSpinner />;
 
   const filtered = complaints.filter((c) => {
     if (filters.status && c.status !== filters.status) return false;
     if (filters.category && c.category !== filters.category) return false;
-    if (filters.search) {
-      const s = filters.search.toLowerCase();
-      if (!c.title.toLowerCase().includes(s) && !(c.description || '').toLowerCase().includes(s)) return false;
-    }
+    if (filters.search) { const s = filters.search.toLowerCase(); if (!c.title.toLowerCase().includes(s) && !(c.description || '').toLowerCase().includes(s)) return false; }
     return true;
   });
 
@@ -281,11 +254,7 @@ function AssignedToMeView({ complaints, loading, onSelectComplaint }) {
       <FilterBar onFilterChange={setFilters} />
       <div className="card bg-base-100 shadow-sm rounded-none border border-base-300">
         <div className="card-body p-0">
-          {complaints.length === 0 ? (
-            <p className="text-center py-12 text-base-content/50 font-semibold">No complaints assigned to you yet.</p>
-          ) : filtered.length === 0 ? (
-            <p className="text-center py-12 text-base-content/50 font-semibold">No complaints match your filters.</p>
-          ) : (
+          {complaints.length === 0 ? <p className="text-center py-12 text-base-content/50 font-semibold">No complaints assigned to you yet.</p> : filtered.length === 0 ? <p className="text-center py-12 text-base-content/50 font-semibold">No complaints match your filters.</p> : (
             <div className="overflow-x-auto">
               <table className="table w-full">
                 <thead className="bg-base-200/50 border-b border-base-300">
@@ -295,18 +264,28 @@ function AssignedToMeView({ complaints, loading, onSelectComplaint }) {
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Status</th>
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Priority</th>
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Filed By</th>
+                    <th className="bg-transparent border-r-0 w-20"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((complaint) => (
-                    <tr key={complaint._id} className="hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
-                      <td className="font-semibold whitespace-nowrap" >{complaint.title}</td>
-                      <td className="whitespace-nowrap">{complaint.category}</td>
-                      <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
-                      <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
-                      <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
-                    </tr>
-                  ))}
+                  {filtered.map((complaint) => {
+                    const hasUpvoted = complaint.upvotes && complaint.upvotes.includes(user.id);
+                    return (
+                      <tr key={complaint._id} className="group hover:bg-base-200/50 cursor-pointer border-b border-base-300/50 last:border-0 transition-colors" onClick={() => onSelectComplaint(complaint)}>
+                        <td className="font-semibold whitespace-nowrap">{complaint.title}</td>
+                        <td className="whitespace-nowrap">{complaint.category}</td>
+                        <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
+                        <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
+                        <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
+                        <td className="bg-transparent border-r-0 border-l-0 p-2">
+                          <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
+                            <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                            <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -319,16 +298,11 @@ function AssignedToMeView({ complaints, loading, onSelectComplaint }) {
 
 function PaginationFooter({ page, totalPages, total, onPageChange }) {
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-base-300 bg-base-200/30">      <span className="text-xs font-semibold uppercase tracking-widest text-base-content/50">Page {page} of {totalPages} · {total} total</span>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-base-300 bg-base-200/30">
+      <span className="text-xs font-semibold uppercase tracking-widest text-base-content/50">Page {page} of {totalPages} · {total} total</span>
       <div className="flex gap-2">
-        <button disabled={page <= 1} onClick={() => onPageChange(page - 1)} className="btn btn-ghost btn-sm rounded-none disabled:opacity-30">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-          Prev
-        </button>
-        <button disabled={page >= totalPages} onClick={() => onPageChange(page + 1)} className="btn btn-ghost btn-sm rounded-none disabled:opacity-30">
-          Next
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
-        </button>
+        <button disabled={page <= 1} onClick={() => onPageChange(page - 1)} className="btn btn-ghost btn-sm rounded-none disabled:opacity-30"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>Prev</button>
+        <button disabled={page >= totalPages} onClick={() => onPageChange(page + 1)} className="btn btn-ghost btn-sm rounded-none disabled:opacity-30">Next<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
       </div>
     </div>
   );
