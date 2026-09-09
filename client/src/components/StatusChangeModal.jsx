@@ -3,14 +3,24 @@ import { showToast } from '../services/toast';
 
 export default function StatusChangeModal({ newStatus, onClose, onConfirm }) {
   const [explanation, setExplanation] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!explanation.trim()) {
       showToast('Please provide an explanation', 'error');
       return;
     }
-    onConfirm(explanation);
+    
+    setLoading(true);
+    try {
+      await onConfirm(explanation); // Wait for parent to finish updating
+    } catch (err) {
+      console.error('StatusChangeModal error:', err);
+      showToast('Failed to update status', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -18,7 +28,7 @@ export default function StatusChangeModal({ newStatus, onClose, onConfirm }) {
       <div className="modal-box w-11/12 max-w-lg rounded-none border border-base-300 p-0">
         <div className="flex items-center justify-between border-b border-base-300 p-4 bg-base-200/30">
           <h3 className="font-black text-lg tracking-tight uppercase">Status Change</h3>
-          <button onClick={onClose} className="btn btn-sm btn-ghost btn-square rounded-none">✕</button>
+          <button onClick={onClose} className="btn btn-sm btn-ghost btn-square rounded-none" disabled={loading}>✕</button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <p className="text-sm text-base-content/70">
@@ -34,12 +44,15 @@ export default function StatusChangeModal({ newStatus, onClose, onConfirm }) {
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t border-base-300">
-            <button type="button" onClick={onClose} className="btn btn-ghost btn-sm rounded-none">Cancel</button>
-            <button type="submit" className="btn btn-primary btn-sm rounded-none hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300">Confirm & Update</button>
+            <button type="button" onClick={onClose} className="btn btn-ghost btn-sm rounded-none" disabled={loading}>Cancel</button>
+            <button type="submit" className="btn btn-primary btn-sm rounded-none hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300" disabled={loading || !explanation.trim()}>
+              {loading ? <span className="loading loading-spinner loading-xs"></span> : 'Confirm & Update'}
+            </button>
           </div>
         </form>
       </div>

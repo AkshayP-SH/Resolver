@@ -118,6 +118,21 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
     } catch (err) { showToast('Failed to delete complaint', 'error'); }
   };
 
+  const handleViewAttachment = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/complaints/${complaint._id}/attachment`, {
+      credentials: 'include' 
+    });
+    if (!response.ok) throw new Error('Not authorized');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  } catch (err) {
+    console.error('Attachment fetch error:', err);
+    showToast('Failed to load attachment. Session may have expired.', 'error');
+  }
+};
+
   const getRoleBadge = (commentUser) => {
     if (!commentUser) return { text: 'User', cls: 'badge-ghost' };
     const userId = typeof commentUser === 'object' ? commentUser._id : commentUser;
@@ -234,14 +249,9 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
                         <p className="text-sm font-medium truncate">{complaint.attachment.filename}</p>
                         <p className="text-xs text-base-content/50">{(complaint.attachment.size / 1024).toFixed(1)} KB</p>
                       </div>
-                      <a 
-                        href={`${import.meta.env.VITE_API_URL}/api/complaints/${complaint._id}/attachment`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="btn btn-sm btn-primary rounded-none shrink-0"
-                      >
+                      <button onClick={handleViewAttachment} className="btn btn-sm btn-primary rounded-none shrink-0">
                         View
-                      </a>
+                      </button>
                     </div>
                   </div>
                 )}

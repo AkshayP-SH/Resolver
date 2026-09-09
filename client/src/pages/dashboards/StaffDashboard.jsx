@@ -16,7 +16,7 @@ export default function StaffDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [reloadTrigger, setReloadTrigger] = useState(0); // Automatic refresh trigger
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -34,46 +34,70 @@ export default function StaffDashboard() {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
+      console.log('📥 [StaffDashboard] Fetching complaints...');
       const data = await getComplaints({ limit: 1000 });
-      setComplaints(Array.isArray(data) ? data : (data.complaints || []));
-    } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
+      const complaintsArray = Array.isArray(data) ? data : (data.complaints || []);
+      console.log('✅ [StaffDashboard] Received complaints count:', complaintsArray.length);
+      setComplaints(complaintsArray);
+    } catch (error) { 
+      console.error('❌ [StaffDashboard] Failed to fetch complaints:', error); 
+      setComplaints([]); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
-  const refreshAll = () => { 
-    fetchComplaints(); 
-    setReloadTrigger(prev => prev + 1); // Force child components to re-fetch
+  const refreshAll = async () => { 
+    console.log('🔄 [StaffDashboard] refreshAll triggered');
+    await fetchComplaints(); 
+    setReloadTrigger(prev => prev + 1); 
     if (window.refreshNotifications) window.refreshNotifications(); 
   };
 
   const handleUpvote = async (e, complaintId) => {
     e.stopPropagation();
-    try { await upvoteComplaint(complaintId); await refreshAll(); showToast('Upvote updated', 'success'); } 
-    catch (error) { showToast('Failed to upvote', 'error'); }
+    try { 
+      await upvoteComplaint(complaintId); 
+      await refreshAll(); 
+      showToast('Upvote updated', 'success'); 
+    } catch (error) { 
+      showToast('Failed to upvote', 'error'); 
+    }
   };
 
   const assignedToMe = complaints.filter((c) => c.assignedTo && c.assignedTo._id === user.id);
 
   const handleAssignToMe = async (complaintId) => {
+    console.log('📌 [StaffDashboard] Attempting to assign:', complaintId);
     try {
-      await updateComplaint(complaintId, { assignedTo: 'self', status: 'ASSIGNED' });
+      const response = await updateComplaint(complaintId, { assignedTo: 'self', status: 'ASSIGNED' });
+      console.log('✅ [StaffDashboard] Assign API response:', response);
       showToast('Assigned to you', 'success');
-      refreshAll();
-    } catch (error) { showToast('Failed to assign', 'error'); }
+      await refreshAll();
+    } catch (error) { 
+      console.error('❌ [StaffDashboard] Assign API error:', error);
+      showToast('Failed to assign', 'error'); 
+    }
   };
 
   const handleStatusChange = async (complaintId, newStatus) => {
+    console.log('🔄 [StaffDashboard] Changing status to:', newStatus, 'for:', complaintId);
     try {
-      await updateComplaint(complaintId, { status: newStatus });
+      const response = await updateComplaint(complaintId, { status: newStatus });
+      console.log('✅ [StaffDashboard] Status change API response:', response);
       showToast(`Status updated to ${newStatus}`, 'success');
-      refreshAll();
-    } catch (error) { showToast('Failed to update status', 'error'); }
+      await refreshAll();
+    } catch (error) { 
+      console.error('❌ [StaffDashboard] Status change API error:', error);
+      showToast('Failed to update status', 'error'); 
+    }
   };
 
   const renderPage = () => {
     switch (currentPage) {
       case 'overview': return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
       case 'all-complaints': return <AllComplaintsView reloadTrigger={reloadTrigger} onAssign={handleAssignToMe} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
-      case 'assigned-to-me': return <AssignedToMeView complaints={assignedToMe} loading={loading} onStatusChange={handleStatusChange} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
+      case 'assigned-to-me': return <AssignedToMeView complaints={assignedToMe} loading={loading} reloadTrigger={reloadTrigger} onStatusChange={handleStatusChange} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
       case 'new-complaint': return <NewComplaintForm onCreated={refreshAll} />;
       default: return <StaffOverview complaints={complaints} assignedToMe={assignedToMe} user={user} onSelectComplaint={setSelectedComplaint} onUpvote={handleUpvote} />;
     }
@@ -110,6 +134,7 @@ export default function StaffDashboard() {
 }
 
 function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint, onUpvote }) {
+  // ... (Keep your existing StaffOverview code, it is correct)
   const total = complaints.length;
   const myAssigned = assignedToMe.length;
   const inProgress = assignedToMe.filter(c => c.status === 'IN_PROGRESS').length;
@@ -123,7 +148,6 @@ function StaffOverview({ complaints, assignedToMe, user, onSelectComplaint, onUp
         <div className="card bg-base-100 border border-base-300 rounded-none hover:-translate-y-1 hover:shadow-xl transition-all duration-300"><div className="card-body"><p className="text-xs uppercase font-bold tracking-widest text-base-content/50">In Progress</p><p className="text-4xl font-black mt-2">{inProgress}</p></div></div>
         <div className="card bg-base-100 border border-base-300 rounded-none hover:-translate-y-1 hover:shadow-xl transition-all duration-300"><div className="card-body"><p className="text-xs uppercase font-bold tracking-widest text-base-content/50">Resolved</p><p className="text-4xl font-black mt-2">{resolved}</p></div></div>
       </div>
-
       <div className="card bg-base-100 border border-base-300 rounded-none">
         <div className="card-body p-0">
           {assignedToMe.filter(c => c.status !== 'RESOLVED' && c.status !== 'REJECTED').length === 0 ? (
@@ -179,6 +203,7 @@ function AllComplaintsView({ reloadTrigger, onAssign, onSelectComplaint, onUpvot
   useEffect(() => { setPage(1); }, [filters]);
   useEffect(() => {
     const fetchFiltered = async () => {
+      console.log('📥 [AllComplaintsView] Fetching data... (trigger:', reloadTrigger, ')');
       try { 
         setLoading(true); 
         const data = await getComplaints({ ...filters, page, limit: 10 }); 
@@ -187,7 +212,7 @@ function AllComplaintsView({ reloadTrigger, onAssign, onSelectComplaint, onUpvot
       } catch (error) { console.error('Failed to fetch complaints:', error); setComplaints([]); } finally { setLoading(false); }
     };
     fetchFiltered();
-  }, [filters, page, reloadTrigger]); // <-- Added reloadTrigger to auto-refresh
+  }, [filters, page, reloadTrigger]);
 
   return (
     <div>
@@ -225,7 +250,7 @@ function AllComplaintsView({ reloadTrigger, onAssign, onSelectComplaint, onUpvot
                             {!complaint.assignedTo && <button className="btn btn-primary btn-xs rounded-none" onClick={(e) => { e.stopPropagation(); onAssign(complaint._id); }}>Assign to Me</button>}
                           </td>
                           <td className="bg-transparent border-r-0 border-l-0 p-2">
-                            <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
+                            <button onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
                               <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                               <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
                             </button>
@@ -245,9 +270,13 @@ function AllComplaintsView({ reloadTrigger, onAssign, onSelectComplaint, onUpvot
   );
 }
 
-function AssignedToMeView({ complaints, loading, onSelectComplaint, onUpvote }) {
+function AssignedToMeView({ complaints, loading, reloadTrigger, onStatusChange, onSelectComplaint, onUpvote }) {
   const [filters, setFilters] = useState({});
   const user = JSON.parse(localStorage.getItem('user'));
+
+  useEffect(() => {
+    console.log('📥 [AssignedToMeView] Re-rendering. Complaints count:', complaints.length, 'Trigger:', reloadTrigger);
+  }, [complaints, reloadTrigger]);
 
   if (loading) return <LoadingSpinner />;
 
@@ -273,6 +302,7 @@ function AssignedToMeView({ complaints, loading, onSelectComplaint, onUpvote }) 
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Status</th>
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Priority</th>
                     <th className="uppercase text-[11px] tracking-widest text-base-content/60">Filed By</th>
+                    <th className="uppercase text-[11px] tracking-widest text-base-content/60">Quick Action</th>
                     <th className="bg-transparent border-r-0 w-20"></th>
                   </tr>
                 </thead>
@@ -286,8 +316,26 @@ function AssignedToMeView({ complaints, loading, onSelectComplaint, onUpvote }) 
                         <td className="whitespace-nowrap"><span className="badge badge-outline rounded-none">{complaint.status}</span></td>
                         <td className="whitespace-nowrap"><span className={`badge rounded-none ${complaint.priority === 'URGENT' ? 'badge-error' : complaint.priority === 'HIGH' ? 'badge-warning' : 'badge-ghost'}`}>{complaint.priority}</span></td>
                         <td className="whitespace-nowrap">{complaint.createdBy?.name || 'Unknown'}</td>
+                        <td className="whitespace-nowrap">
+                          {/* Inline status change for immediate UX, stops propagation so it doesn't open the modal */}
+                          <select 
+                            className="select select-bordered select-xs rounded-none"
+                            value={complaint.status}
+                            onClick={(e) => e.stopPropagation()} 
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              if (onStatusChange) onStatusChange(complaint._id, e.target.value);
+                            }}
+                            disabled={complaint.status === 'RESOLVED' || complaint.status === 'REJECTED'}
+                          >
+                            <option value="ASSIGNED">ASSIGNED</option>
+                            <option value="IN_PROGRESS">IN_PROGRESS</option>
+                            <option value="RESOLVED">RESOLVED</option>
+                            <option value="REJECTED">REJECTED</option>
+                          </select>
+                        </td>
                         <td className="bg-transparent border-r-0 border-l-0 p-2">
-                          <button onClick={(e) => onUpvote(e, complaint._id)} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
+                          <button onClick={(e) => { e.stopPropagation(); onUpvote(e, complaint._id); }} className={`flex items-center justify-center h-8 rounded-md border transition-all duration-200 overflow-hidden ${hasUpvoted ? 'bg-primary border-primary text-white w-16' : 'bg-transparent border-transparent text-base-content/40 w-8 group-hover:w-16 group-hover:border-primary group-hover:text-primary group-hover:bg-base-100'}`}>
                             <svg className={`w-4 h-4 transition-all duration-200 ${hasUpvoted ? 'opacity-100 mr-1' : 'opacity-0 w-0 mr-0 group-hover:opacity-100 group-hover:mr-1'}`} fill={hasUpvoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                             <span className="text-xs font-bold whitespace-nowrap">{complaint.upvotes?.length || 0}</span>
                           </button>

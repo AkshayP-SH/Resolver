@@ -7,13 +7,24 @@ export default function UserDetailModal({ user, onClose, onUpdate }) {
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
+    if (role === user.role) {
+      onClose();
+      return;
+    }
+    
     setLoading(true);
     try {
+      console.log('📌 [UserDetailModal] Updating user role:', user._id, 'to', role);
       await updateUser(user._id, { role });
       showToast('User role updated!', 'success');
-      if (onUpdate) onUpdate();
-      setTimeout(() => onClose(), 800);
+      
+      if (onUpdate) {
+        await onUpdate(); // Wait for parent fetch to complete
+      }
+      
+      setTimeout(() => onClose(), 500);
     } catch (err) {
+      console.error('❌ [UserDetailModal] Update error:', err);
       showToast('Failed to update user', 'error');
     } finally {
       setLoading(false);
@@ -25,7 +36,7 @@ export default function UserDetailModal({ user, onClose, onUpdate }) {
       <div className="modal-box w-11/12 max-w-2xl rounded-none border border-base-300 p-0">
         <div className="flex items-center justify-between border-b border-base-300 p-6 bg-base-200/30">
           <h3 className="font-black text-xl tracking-tight uppercase">User Management</h3>
-          <button onClick={onClose} className="btn btn-sm btn-ghost btn-square rounded-none">✕</button>
+          <button onClick={onClose} className="btn btn-sm btn-ghost btn-square rounded-none" disabled={loading}>✕</button>
         </div>
 
         <div className="p-6 space-y-6">
@@ -46,6 +57,7 @@ export default function UserDetailModal({ user, onClose, onUpdate }) {
               className="select select-bordered rounded-none w-full max-w-xs bg-base-200/40"
               value={role}
               onChange={(e) => setRole(e.target.value)}
+              disabled={loading}
             >
               <option value="user">User</option>
               <option value="staff">Staff</option>
@@ -54,7 +66,7 @@ export default function UserDetailModal({ user, onClose, onUpdate }) {
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t border-base-300">
-            <button onClick={onClose} className="btn btn-ghost btn-sm rounded-none">Cancel</button>
+            <button onClick={onClose} className="btn btn-ghost btn-sm rounded-none" disabled={loading}>Cancel</button>
             <button 
               onClick={handleSave} 
               className="btn btn-primary btn-sm rounded-none hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300" 

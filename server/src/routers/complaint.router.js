@@ -1,43 +1,47 @@
-    import express from 'express';
-    import Complaint from '../models/Complaint.js';
-    import Comment from '../models/Comment.js';
-    import multer from 'multer';
-    import { upload } from '../middleware/uploadMiddleware.js';
-    import { createNotification, sendEmailNotification } from '../services/notificationService.js';
+import express from 'express';
+import Complaint from '../models/Complaint.js';
+import Comment from '../models/Comment.js';
+import multer from 'multer';
+import { protect, adminOnly } from '../middleware/authMiddleware.js';
+import { createNotification, sendEmailNotification } from '../services/notificationService.js';
 
-    const router = express.Router();
+const router = express.Router();
 
-    router.post('/', upload.single('attachment'), async (req, res) => {
-        try{
-            const { title, description, category, location, priority} = req.body;
-            const newcomplaint = new Complaint({ 
-                title, 
-                description,
-                category, 
-                location, 
-                priority,
-                createdBy: req.user._id
+router.use(protect);
 
-                });
-                if (req.file) {
-                    newcomplaint.attachment = {
-                        data: req.file.buffer,
-                        contentType: req.file.mimetype,
-                        filename: req.file.originalname,
-                        size: req.file.size
-                    };
-                }
-                await newcomplaint.save();
-                res.status(201).json({ 
-        message: 'Complaint created successfully', 
-        complaint: newcomplaint 
+router.post('/', async (req, res) => {
+    try {
+        const { title, description, category, location, priority } = req.body;
+        const newcomplaint = new Complaint({ 
+            title, 
+            description,
+            category, 
+            location, 
+            priority,
+            createdBy: req.user._id
         });
-        } catch (error) {
-            res.status(500).json({message:"complaint error",error});
-        }
-    })
 
-    router.get('/', async (req, res) => {
+        
+        if (req.file) {
+            newcomplaint.attachment = {
+                data: req.file.buffer,
+                contentType: req.file.mimetype,
+                filename: req.file.originalname,
+                size: req.file.size
+            };
+        }
+        
+        await newcomplaint.save();
+        res.status(201).json({ 
+            message: 'Complaint created successfully', 
+            complaint: newcomplaint 
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Complaint creation error", error: error.message });
+    }
+});
+
+router.get('/', async (req, res) => {
     try {
         const { status, category, search, sort, mine, page, limit } = req.query;
         const filter = {};
@@ -71,7 +75,9 @@
         if (sort === 'priority') {
             const all = await Complaint.find(filter)
                 .populate('createdBy', 'name email role')
-                .populate('assignedTo', 'name email role');
+                .populate('assignedTo', 'name email role')
+                .limit(500);
+                
             const rank = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
             const sortedAll = all.sort((a, b) => (rank[a.priority] ?? 99) - (rank[b.priority] ?? 99));
             complaints = sortedAll.slice(skip, skip + limitNum);
@@ -92,220 +98,221 @@
     }
 });
 
-    router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
-        const complaint = await Complaint.findById(req.params.id).populate('createdBy', 'name email role').populate('assignedTo', 'name email role');
+        const complaint = await Complaint.findById(req.params.id)
+            .populate('createdBy', 'name email role')
+            .populate('assignedTo', 'name email role');
 
         if (!complaint) {
-        return res.status(404).json({ message: 'Complaint not found' });
+            return res.status(404).json({ message: 'Complaint not found' });
         }
 
         res.json({ complaint });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching complaint', error: error.message });
     }
-    });
+});
 
-        router.put('/:id', async (req, res) => {
-        try {
-            const complaint = await Complaint.findById(req.params.id);
-            if (!complaint) {
-                return res.status(404).json({ message: 'Complaint not found' });
-            }
-            if (complaint.status === 'RESOLVED' || complaint.status === 'REJECTED') {
-                return res.status(400).json({ message: 'Complaint already resolved/rejected' });
-            }
-
-            const { title, description, status, priority, assignedTo, explanation } = req.body;
-
-            const originalStatus = complaint.status;
-            const originalAssignedTo = complaint.assignedTo ? complaint.assignedTo.toString() : null;
-
-            if (status && status !== originalStatus) {
-                complaint.statusHistory.push({
-                    status: status,
-                    changedBy: req.user._id,
-                    explanation: explanation || ''
-                });
-            }
-
-            if (req.user.role === 'admin') {
-                if (title) complaint.title = title;
-                if (description) complaint.description = description;
-                if (status) complaint.status = status;
-                if (priority) complaint.priority = priority;
-                if (assignedTo) {
-                    complaint.assignedTo = assignedTo;
-                    if (complaint.status === 'SUBMITTED') {
-                        complaint.status = 'ASSIGNED';
-                        complaint.statusHistory.push({
-                            status: 'ASSIGNED',
-                            changedBy: req.user._id,
-                            explanation: 'Automatically assigned to staff'
-                        });
-                    }
-                }
-            } else if (req.user.role === 'staff') {
-                const isAssigned = complaint.assignedTo && complaint.assignedTo.toString() === req.user._id.toString();
-                const isSelfAssigning = assignedTo && !complaint.assignedTo;
-                
-                if (!isAssigned && !isSelfAssigning) {
-                    return res.status(403).json({ message: 'You can only update complaints assigned to you' });
-                }
-                
-                if (status) complaint.status = status;
-                if (assignedTo) {
-                    complaint.assignedTo = req.user._id;
-                    if (complaint.status === 'SUBMITTED') {
-                        complaint.status = 'ASSIGNED';
-                        complaint.statusHistory.push({
-                            status: 'ASSIGNED',
-                            changedBy: req.user._id,
-                            explanation: 'Staff self-assigned'
-                        });
-                    }
-                }
-            } else {
-                if (complaint.createdBy.toString() !== req.user._id.toString()) {
-                    return res.status(403).json({ message: 'You are not authorized to update this complaint' });
-                }
-                if (title) complaint.title = title;
-                if (description) complaint.description = description;
-            }
-
-            const updated = await complaint.save();
-
-            const populated = await updated.populate([
-                { path: 'createdBy', select: 'name email role' },
-                { path: 'assignedTo', select: 'name email role' },
-                { path: 'statusHistory.changedBy', select: 'name email role' }
-            ]);
-
-            const actualAssigneeId = (assignedTo === 'self') ? req.user._id : assignedTo;
-
-            if (actualAssigneeId && actualAssigneeId.toString() !== originalAssignedTo && actualAssigneeId.toString() !== populated.createdBy._id.toString()) {
-                await createNotification(
-                    actualAssigneeId,
-                    'ASSIGNED',
-                    `You have been assigned to complaint: "${populated.title}"`,
-                    populated._id
-                );
-                await sendEmailNotification(
-                    actualAssigneeId,
-                    'New Complaint Assignment - Resolver',
-                    `<p>You have been assigned to a new complaint: <strong>${populated.title}</strong></p>`
-                );
-            }
-
-            if (status && status !== originalStatus) {
-                await createNotification(
-                    populated.createdBy._id,
-                    'STATUS_CHANGE',
-                    `Your complaint "${populated.title}" status changed to ${status}`,
-                    populated._id
-                );
-                await sendEmailNotification(
-                    populated.createdBy._id,
-                    'Complaint Status Updated - Resolver',
-                    `<p>Your complaint <strong>${populated.title}</strong> status has been updated to <strong>${status}</strong>.</p>`
-                );
-            }
-
-            res.json({ message: 'Complaint updated successfully', complaint: populated });
-
-        } catch (error) {
-            res.status(500).json({ message: 'Error updating complaint', error: error.message });
+router.put('/:id', async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id);
+        if (!complaint) {
+            return res.status(404).json({ message: 'Complaint not found' });
         }
-    });
+        if (complaint.status === 'RESOLVED' || complaint.status === 'REJECTED') {
+            return res.status(400).json({ message: 'Complaint already resolved/rejected' });
+        }
 
-    router.post('/:id/upvote', async (req, res) => {
-        try {
-            const complaint = await Complaint.findById(req.params.id);
-            if (!complaint) {
-                return res.status(404).json({ message: 'Complaint not found' });
+        const { title, description, status, priority, assignedTo, explanation } = req.body;
+
+        const originalStatus = complaint.status;
+        const originalAssignedTo = complaint.assignedTo ? complaint.assignedTo.toString() : null;
+
+        if (status && status !== originalStatus) {
+            complaint.statusHistory.push({
+                status: status,
+                changedBy: req.user._id,
+                explanation: explanation || ''
+            });
+        }
+
+        if (req.user.role === 'admin') {
+            if (title) complaint.title = title;
+            if (description) complaint.description = description;
+            if (status) complaint.status = status;
+            if (priority) complaint.priority = priority;
+            if (assignedTo) {
+                complaint.assignedTo = assignedTo;
+                if (complaint.status === 'SUBMITTED') {
+                    complaint.status = 'ASSIGNED';
+                    complaint.statusHistory.push({
+                        status: 'ASSIGNED',
+                        changedBy: req.user._id,
+                        explanation: 'Automatically assigned to staff'
+                    });
+                }
             }
-            const alreadyUpvoted = complaint.upvotes.some(
-                id => id.toString() === req.user._id.toString()
+        } else if (req.user.role === 'staff') {
+            const isAssigned = complaint.assignedTo && complaint.assignedTo.toString() === req.user._id.toString();
+            const isSelfAssigning = assignedTo && !complaint.assignedTo;
+            
+            if (!isAssigned && !isSelfAssigning) {
+                return res.status(403).json({ message: 'You can only update complaints assigned to you' });
+            }
+            
+            if (status) complaint.status = status;
+            if (assignedTo) {
+                complaint.assignedTo = req.user._id;
+                if (complaint.status === 'SUBMITTED') {
+                    complaint.status = 'ASSIGNED';
+                    complaint.statusHistory.push({
+                        status: 'ASSIGNED',
+                        changedBy: req.user._id,
+                        explanation: 'Staff self-assigned'
+                    });
+                }
+            }
+        } else {
+            if (complaint.createdBy.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: 'You are not authorized to update this complaint' });
+            }
+            if (title) complaint.title = title;
+            if (description) complaint.description = description;
+        }
+
+        const updated = await complaint.save();
+
+        const populated = await updated.populate([
+            { path: 'createdBy', select: 'name email role' },
+            { path: 'assignedTo', select: 'name email role' },
+            { path: 'statusHistory.changedBy', select: 'name email role' }
+        ]);
+
+        const actualAssigneeId = (assignedTo === 'self') ? req.user._id : assignedTo;
+
+        if (actualAssigneeId && actualAssigneeId.toString() !== originalAssignedTo && actualAssigneeId.toString() !== populated.createdBy._id.toString()) {
+            await createNotification(
+                actualAssigneeId,
+                'ASSIGNED',
+                `You have been assigned to complaint: "${populated.title}"`,
+                populated._id
             );
-
-            if (alreadyUpvoted) {
-                complaint.upvotes = complaint.upvotes.filter(
-                    id => id.toString() !== req.user._id.toString()
-                );
-            } else {
-                complaint.upvotes.push(req.user._id);
-            }
-
-            await complaint.save();
-            res.json({ message: alreadyUpvoted ? 'Upvote removed' : 'Complaint upvoted', complaint });
-        } catch (error) {
-            res.status(500).json({ message: 'Error upvoting complaint', error: error.message });
+            await sendEmailNotification(
+                actualAssigneeId,
+                'New Complaint Assignment - Resolver',
+                `<p>You have been assigned to a new complaint: <strong>${populated.title}</strong></p>`
+            );
         }
-    });
 
-    router.delete('/:id', async (req, res) => {
-        try {
-            const complaint = await Complaint.findById(req.params.id);
+        if (status && status !== originalStatus) {
+            await createNotification(
+                populated.createdBy._id,
+                'STATUS_CHANGE',
+                `Your complaint "${populated.title}" status changed to ${status}`,
+                populated._id
+            );
+            await sendEmailNotification(
+                populated.createdBy._id,
+                'Complaint Status Updated - Resolver',
+                `<p>Your complaint <strong>${populated.title}</strong> status has been updated to <strong>${status}</strong>.</p>`
+            );
+        }
 
-            if (!complaint) {
-                return res.status(404).json({ message: 'Complaint not found' });
-            }
+        res.json({ message: 'Complaint updated successfully', complaint: populated });
 
-            if (req.user.role === 'admin') {
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating complaint', error: error.message });
+    }
+});
+
+router.post('/:id/upvote', async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id);
+        if (!complaint) {
+            return res.status(404).json({ message: 'Complaint not found' });
+        }
+        const alreadyUpvoted = complaint.upvotes.some(
+            id => id.toString() === req.user._id.toString()
+        );
+
+        if (alreadyUpvoted) {
+            complaint.upvotes = complaint.upvotes.filter(
+                id => id.toString() !== req.user._id.toString()
+            );
+        } else {
+            complaint.upvotes.push(req.user._id);
+        }
+
+        await complaint.save();
+        res.json({ message: alreadyUpvoted ? 'Upvote removed' : 'Complaint upvoted', complaint });
+    } catch (error) {
+        res.status(500).json({ message: 'Error upvoting complaint', error: error.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id);
+
+        if (!complaint) {
+            return res.status(404).json({ message: 'Complaint not found' });
+        }
+
+        if (req.user.role === 'admin') {
+            await Comment.deleteMany({ complaint: req.params.id });
+            await Complaint.findByIdAndDelete(req.params.id);
+            return res.json({ message: 'Complaint deleted successfully' });
+        }
+
+        if (req.user.role === 'staff') {
+            return res.status(403).json({ message: 'Staff cannot delete complaints' });
+        }
+
+        if (req.user.role === 'user') {
+            const isOwner = complaint.createdBy.toString() === req.user._id.toString();
+            const canDelete = complaint.status === 'SUBMITTED' || complaint.status === 'REJECTED';
+
+            if (isOwner && canDelete) {
                 await Comment.deleteMany({ complaint: req.params.id });
                 await Complaint.findByIdAndDelete(req.params.id);
                 return res.json({ message: 'Complaint deleted successfully' });
             }
 
-            if (req.user.role === 'staff') {
-                return res.status(403).json({ message: 'Staff cannot delete complaints' });
-            }
-
-            if (req.user.role === 'user') {
-                const isOwner = complaint.createdBy.toString() === req.user._id.toString();
-                const canDelete = complaint.status === 'SUBMITTED' || complaint.status === 'REJECTED';
-
-                if (isOwner && canDelete) {
-                    await Comment.deleteMany({ complaint: req.params.id });
-                    await Complaint.findByIdAndDelete(req.params.id);
-                    return res.json({ message: 'Complaint deleted successfully' });
-                }
-
-                return res.status(403).json({ message: 'You can only delete your own submitted/rejected complaints' });
-            }
-
-        } catch (error) {
-            res.status(500).json({ message: 'Error deleting complaint', error: error.message });
+            return res.status(403).json({ message: 'You can only delete your own submitted/rejected complaints' });
         }
-    });
 
-    router.get('/:id/attachment', async (req, res) => {
-        try {
-            const complaint = await Complaint.findById(req.params.id);
-            if (!complaint || !complaint.attachment || !complaint.attachment.data) {
-                return res.status(404).json({ message: 'Attachment not found' });
-            }
-            
-            res.set('Content-Type', complaint.attachment.contentType);
-            res.set('Content-Disposition', `inline; filename="${complaint.attachment.filename}"`);
-            res.send(complaint.attachment.data);
-        } catch (error) {
-            res.status(500).json({ message: 'Error fetching attachment', error: error.message });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting complaint', error: error.message });
+    }
+});
+
+router.get('/:id/attachment', async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id);
+        if (!complaint || !complaint.attachment || !complaint.attachment.data) {
+            return res.status(404).json({ message: 'Attachment not found' });
         }
-    });
+        
+        res.set('Content-Type', complaint.attachment.contentType);
+        res.set('Content-Disposition', `inline; filename="${complaint.attachment.filename}"`);
+        res.send(complaint.attachment.data);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching attachment', error: error.message });
+    }
+});
 
-
-    router.use((err, req, res, next) => {
-        if (err instanceof multer.MulterError) {
-            if (err.code === 'LIMIT_FILE_SIZE') {
-                return res.status(400).json({ message: 'File too large. Maximum size is 5MB.' });
-            }
-            return res.status(400).json({ message: err.message });
+router.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ message: 'File too large. Maximum size is 5MB.' });
         }
-        if (err) {
-            return res.status(400).json({ message: err.message });
-        }
-        next();
-    });
+        return res.status(400).json({ message: err.message });
+    }
+    if (err) {
+        return res.status(400).json({ message: err.message });
+    }
+    next();
+});
 
-    export default router;
+export default router;
