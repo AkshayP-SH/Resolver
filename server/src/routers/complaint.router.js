@@ -181,15 +181,17 @@
                 { path: 'statusHistory.changedBy', select: 'name email role' }
             ]);
 
-            if (assignedTo && assignedTo !== originalAssignedTo && assignedTo !== populated.createdBy._id.toString()) {
+            const actualAssigneeId = (assignedTo === 'self') ? req.user._id : assignedTo;
+
+            if (actualAssigneeId && actualAssigneeId.toString() !== originalAssignedTo && actualAssigneeId.toString() !== populated.createdBy._id.toString()) {
                 await createNotification(
-                    assignedTo,
+                    actualAssigneeId,
                     'ASSIGNED',
                     `You have been assigned to complaint: "${populated.title}"`,
                     populated._id
                 );
                 await sendEmailNotification(
-                    assignedTo,
+                    actualAssigneeId,
                     'New Complaint Assignment - Resolver',
                     `<p>You have been assigned to a new complaint: <strong>${populated.title}</strong></p>`
                 );
