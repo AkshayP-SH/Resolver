@@ -1,0 +1,20 @@
+<svg width="900" height="80" viewBox="0 0 900 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dividerGrad" x1="0" y1="0" x2="900" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F172A" stop-opacity="0"/>
+      <stop offset="0.15" stop-color="#7C3AED"/>
+      <stop offset="0.5" stop-color="#14B8A6"/>
+      <stop offset="0.85" stop-color="#0EA5E9"/>
+      <stop offset="1" stop-color="#0F172A" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="80" fill="transparent"/>
+  <line x1="110" y1="40" x2="790" y2="40" stroke="url(#dividerGrad)" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="110" cy="40" r="5" fill="#7C3AED"/>
+  <circle cx="450" cy="40" r="6" fill="#14B8A6"/>
+  <circle cx="790" cy="40" r="5" fill="#0EA5E9"/>
+  <path d="M407 26H493V54H407V26Z" fill="#111827" fill-opacity="0.14" stroke="#94A3B8" stroke-width="1.2"/>
+  <path d="M427 34H473" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M427 40H473" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M427 46H462" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

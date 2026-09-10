@@ -1,80 +1,147 @@
-<p align="center">
-  <img src="client/public/favicon.svg" alt="Resolver logo" width="120" />
-</p>
+﻿<div align="center">
+  <img src="client/public/favicon.svg" alt="Resolver Logo" width="120" />
+  <h1>Resolver</h1>
+  <p><strong>Digital Complaint Management Platform</strong></p>
+  <p>
+    <img alt="Status" src="https://img.shields.io/badge/Status-Production%20Ready-4CAF50?style=for-the-badge" />
+    <img alt="License" src="https://img.shields.io/badge/License-ISC-blue?style=for-the-badge" />
+    <img alt="Frontend" src="https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
+    <img alt="Client Build" src="https://img.shields.io/badge/Client-Build%20with%20Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+    <img alt="Backend" src="https://img.shields.io/badge/Backend-Express%205-000000?style=for-the-badge&logo=express&logoColor=white" />
+    <img alt="Database" src="https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" />
+    <img alt="Auth" src="https://img.shields.io/badge/Auth-JWT%20%2B%20Google-111827?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
+    <img alt="UI" src="https://img.shields.io/badge/UI-Tailwind%20%2B%20DaisyUI-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+    <img alt="Notifications" src="https://img.shields.io/badge/Notifications-Brevo%20Email-3A7BD5?style=for-the-badge&logo=maildotru&logoColor=white" />
+  </p>
+</div>
 
-# Resolver
+Resolver is a full-stack complaint and issue tracking application built for organizations that need a simple yet powerful way to receive, triage, assign, track, and resolve user-reported issues. The platform is designed around three user roles: <strong>Users</strong>, <strong>Staff</strong>, and <strong>Admins</strong>, each with tailored access and workflows.
 
-Resolver is a digital complaint and resolution portal built for a workplace or organization environment. It allows users to submit complaints, track their lifecycle, collaborate through upvotes and comments, and lets staff and administrators manage assignments, statuses, and user roles through role-based dashboards.
+The project currently includes a React frontend, an Express + MongoDB backend, a role-based dashboard system, Google sign-in support, password reset flows, email notifications, complaint attachments, and public health/statistics endpoints.
 
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+<h2><img src="client/public/readme/features-icon.svg" alt="Features Icon" width="18" style="vertical-align: middle; margin-right: 8px;" /> Built With</h2>
+
+- React 19 + Vite for the client experience
+- Express 5 + Node.js for the API layer
+- MongoDB with Mongoose for persistence
+- JWT authentication with cookie-based session handling
+- Google OAuth for social sign-in
+- Brevo integration for transactional email notifications
+- Tailwind CSS + DaisyUI for the presentation layer
+- Multer for complaint attachments and file uploads
+
+---
 
 ## Overview
 
-Resolver was developed as an internship project for Shnoor International with a goal of replacing fragmented complaint handling with a transparent issue tracking system.
+Resolver is designed to help teams manage complaints efficiently from submission to resolution. It supports:
 
-The application follows a forum-style model where complaints are visible to the whole system, users can upvote issues they care about, staff can work on assigned complaints, and admins can manage users and overall workflow.
+- Complaint creation with optional attachments
+- Complaint prioritization and status updates
+- Staff self-assignment and assignment workflows
+- Admin user management
+- Public stats and health monitoring
+- Notifications and email alerts
+- Theme support and modern UI
+- Secure authentication with JWT, cookies, and Google OAuth
 
-## What the app does
+---
 
-### User experience
+## Key Features
 
-- Register and log in with email and password
-- Submit new complaints with optional attachments
-- View all complaints, filter by status/category/search
-- Upvote complaints and add comments
-- Edit or delete their own submitted complaints while the complaint is still in the submitted state
-- View profile settings and manage email notification preferences
-- Request password reset through email
+### User Features
+- Register and sign in with email/password
+- Sign in with Google account
+- Create complaints with title, description, category, location, and priority
+- Upload attachments (images and PDFs up to 5MB)
+- View all complaints or only their own complaints
+- Upvote complaints
+- Comment on complaints through the complaint detail workflow
+- Receive notifications and email updates when complaint statuses change
+- Manage profile, change password, and toggle email notifications
+- Access password reset flow via email
 
-### Staff capabilities
+### Staff Features
+- View all complaints in the system
+- See assigned complaints separately
+- Self-assign complaints to themselves
+- Update status of complaints assigned to them
+- Update complaint progress and resolution state
+- Receive notifications when assigned or when complaint status changes
+- Use filtering, pagination, and search to manage workload
 
-- Access a dedicated staff dashboard
-- View all complaints and filter lists
-- Self-assign unassigned complaints
-- Update complaint status and provide explanations when required
-- See complaints assigned to them and manage their workload
-- Receive notifications when complaints are assigned or updated
+### Admin Features
+- View all complaints and user data
+- Manage user roles
+- Assign complaints to staff members
+- Oversee system-wide complaint flow
+- Delete complaints fully
+- Monitor and support platform activity through dashboards
 
-### Admin capabilities
+### Platform Features
+- Protected routes and role-aware authorization
+- Rate limiting for API usage
+- CORS and security middleware
+- Health and stats endpoints for monitoring
+- Email integration using Brevo
+- MongoDB persistence with Mongoose schemas
+- Responsive UI for desktop and mobile
 
-- Access an admin dashboard with system-wide overview stats
-- View and manage all complaints
-- Reassign complaints to staff
-- Override priority and manage assignments
-- View registered users and change a user role between user, staff, and admin
-- Manage system-level visibility and analytics
+---
 
-## Architecture
+<h2><img src="client/public/readme/roles-icon.svg" alt="Roles Icon" width="18" style="vertical-align: middle; margin-right: 8px;" /> Role-Based Access</h2>
 
-The project is split into two main parts:
+| Role | What they can do |
+| --- | --- |
+| User | Register/login, file complaints, upload attachments, view complaints, upvote, manage profile, delete own submitted/rejected complaints |
+| Staff | View all complaints, self-assign, update assigned complaints, change statuses, receive notifications |
+| Admin | Full access to complaint lifecycle, user management, role updates, global oversight, deletion of complaints |
+
+### Role Rules Implemented in the Backend
+- `protect` verifies JWT tokens from `Authorization` header or `token` cookie
+- `adminOnly` restricts admin-only endpoints
+- Staff can only update complaints assigned to them or self-assign
+- Users can only update their own complaints
+- Staff cannot delete complaints
+- Users can only delete their own complaints while they are still `SUBMITTED` or `REJECTED`
+
+---
+
+<h2><img src="client/public/readme/architecture-icon.svg" alt="Architecture Icon" width="18" style="vertical-align: middle; margin-right: 8px;" /> System Architecture</h2>
 
 ### Frontend
+The client side is built with:
 
 - React 19
 - Vite
-- React Router DOM
-- Tailwind CSS v4
+- React Router
+- Tailwind CSS
 - DaisyUI
-- Client-side theme toggle and dashboard layouts
+- Lightweight API wrapper for authenticated requests
 
 ### Backend
+The server side is built with:
 
-- Node.js
 - Express 5
-- MongoDB with Mongoose
-- JWT-based authentication using cookies
-- bcrypt password hashing
-- rate limiting and security middleware
-- file upload handling with Multer
-- Brevo email API for password resets and alerts
+- MongoDB via Mongoose
+- JWT-based authentication
+- Cookie-based session support
+- Multer for attachments
+- Helmet, CORS, and rate limiting
+- Brevo email integration
+- Google OAuth via `google-auth-library`
 
-## Folder structure
+### Database Models
+The backend currently uses these primary models:
+
+- `User` — authentication, profile, role, tokens, notification preferences
+- `Complaint` — complaints, status history, attachments, assignment, upvotes
+- `Comment` — complaint discussion/threading
+- `Notification` — in-app notifications
+
+---
+
+## Folder Structure
 
 ```text
 Resolver/
@@ -84,12 +151,17 @@ Resolver/
 │   │   ├── favicon.svg
 │   │   └── icons.svg
 │   ├── src/
+│   │   ├── App.jsx
+│   │   ├── App.css
+│   │   ├── index.css
+│   │   ├── main.jsx
 │   │   ├── assets/
 │   │   ├── components/
 │   │   │   ├── AuthShowcase.jsx
 │   │   │   ├── ComplaintDetailModal.jsx
 │   │   │   ├── ErrorBoundary.jsx
 │   │   │   ├── FilterBar.jsx
+│   │   │   ├── GoogleButton.jsx
 │   │   │   ├── GuestRoute.jsx
 │   │   │   ├── LoadingSpinner.jsx
 │   │   │   ├── NewComplaintForm.jsx
@@ -108,6 +180,7 @@ Resolver/
 │   │   │   ├── Landing.jsx
 │   │   │   ├── Login.jsx
 │   │   │   ├── NotFound.jsx
+│   │   │   ├── PrivacyPolicy.jsx
 │   │   │   ├── Profile.jsx
 │   │   │   ├── Register.jsx
 │   │   │   ├── ResetPassword.jsx
@@ -118,257 +191,260 @@ Resolver/
 │   │   ├── services/
 │   │   │   ├── api.js
 │   │   │   └── toast.js
-│   │   ├── App.css
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── .gitignore
-│   ├── eslint.config.js
+│   │   └── ...
 │   ├── index.html
 │   ├── package.json
-│   ├── package-lock.json
 │   ├── README.md
 │   ├── vercel.json
 │   └── vite.config.js
 │
-└── server/
-    ├── src/
-    │   ├── config/
-    │   │   └── db.js
-    │   ├── middleware/
-    │   │   ├── authMiddleware.js
-    │   │   ├── rateLimiter.js
-    │   │   └── uploadMiddleware.js
-    │   ├── models/
-    │   │   ├── Comment.js
-    │   │   ├── Complaint.js
-    │   │   ├── Notification.js
-    │   │   └── User.js
-    │   ├── routers/
-    │   │   ├── auth.router.js
-    │   │   ├── comment.router.js
-    │   │   ├── complaint.router.js
-    │   │   ├── notification.router.js
-    │   │   ├── public.router.js
-    │   │   └── user.router.js
-    │   ├── services/
-    │   │   ├── emailService.js
-    │   │   └── notificationService.js
-    │   └──
-    ├── index.js
-    ├── package.json
-    ├── package-lock.json
-    └──
+├── server/
+│   ├── index.js
+│   ├── package.json
+│   └── src/
+│       ├── config/
+│       │   └── db.js
+│       ├── middleware/
+│       │   ├── authMiddleware.js
+│       │   ├── rateLimiter.js
+│       │   └── uploadMiddleware.js
+│       ├── models/
+│       │   ├── Comment.js
+│       │   ├── Complaint.js
+│       │   ├── Notification.js
+│       │   └── User.js
+│       ├── routers/
+│       │   ├── auth.router.js
+│       │   ├── comment.router.js
+│       │   ├── complaint.router.js
+│       │   ├── notification.router.js
+│       │   ├── public.router.js
+│       │   └── user.router.js
+│       └── services/
+│           ├── emailService.js
+│           └── notificationService.js
+└── .git/
 ```
 
-## Core data models
+---
 
-### User
+## How the App Works
 
-Users contain:
+### Authentication Flow
+- Users can register normally or use Google Sign-In
+- A JWT is created and returned after successful login
+- The token is stored in a cookie and also returned to the client for API authorization
+- `protect` middleware checks the token on protected routes
+- Logout invalidates the current token by incrementing `tokenVersion`
 
-- name
-- email
-- password
-- role: user, staff, or admin
-- tokenVersion for session invalidation
-- emailNotifications preference
-- resetToken and resetTokenExpiry for password recovery
+### Complaint Lifecycle
+1. A user creates a complaint with optional attachment
+2. Complaint is stored in MongoDB with initial status `SUBMITTED`
+3. Admins or staff can assign complaints
+4. Staff can update the complaint status as progress happens
+5. Notifications are generated when assigned or status changes
+6. Email notifications are sent when the user has email notifications enabled
+7. Complaint can be viewed, commented on, upvoted, and resolved/rejected
 
-### Complaint
+### Public Endpoints
+- `/api/public/health` returns server and database connectivity info
+- `/api/public/stats` returns resolved complaint count and average resolution time
 
-Complaints include:
+---
 
-- title
-- description
-- category
-- location
-- priority
-- createdBy
-- assignedTo
-- status
-- statusHistory
-- upvotes
-- attachment
-- timestamps
+## Environment Variables
 
-### Comment
-
-Comments are linked to a complaint and a user and contain text plus timestamps.
-
-### Notification
-
-Notifications are created for assignment events, status changes, and other alerts. They are stored per user and can be marked as read.
-
-## Main workflows
-
-### Complaint lifecycle
-
-1. User submits a complaint with optional attachment
-2. Complaint starts in SUBMITTED state
-3. Staff can self-assign or admin can assign a staff member
-4. Staff updates complaint status through the complaint modal
-5. Status changes are logged in statusHistory with an explanation
-6. Notifications are sent to the complaint creator and assigned staff
-7. Resolved and rejected complaints are locked from further modification
-
-### Role logic
-
-- Users can create, view, upvote, comment on, and edit their own submitted complaints
-- Staff can interact with complaints assigned to them and can self-assign unassigned complaints
-- Admins can manage system-wide data, user roles, and complaint assignment
-
-## Environment variables
-
-### Server
-
-Create a `.env` file inside `server/`:
-
-```env
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/resolver
-JWT_SECRET=your_jwt_secret_here
-CLIENT_ORIGIN=http://localhost:5173
-BREVO_API_KEY=your_brevo_api_key
-BREVO_SENDER_EMAIL=your_verified_sender@example.com
-NODE_ENV=development
-```
-
-### Client
-
-Create a `.env` file inside `client/`:
-
+### Client (`client/.env`)
 ```env
 VITE_API_URL=http://localhost:3000
 ```
 
-## Local setup
+### Server (`server/.env`)
+```env
+PORT=3000
+CLIENT_ORIGIN=http://localhost:5173
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database>
+JWT_SECRET=your_super_secret_jwt_key
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+BREVO_API_KEY=your_brevo_api_key
+BREVO_SENDER_EMAIL=your_verified_sender_email
+NODE_ENV=development
+```
+
+> Note: In production, `CLIENT_ORIGIN` should point to your deployed frontend domain.
+
+---
+
+<h2><img src="client/public/readme/setup-icon.svg" alt="Setup Icon" width="18" style="vertical-align: middle; margin-right: 8px;" /> Local Setup</h2>
 
 ### 1. Clone the repository
-
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/<your-username>/Resolver.git
 cd Resolver
 ```
 
-### 2. Install backend dependencies
-
+### 2. Install dependencies
 ```bash
-cd server
+cd client
+npm install
+
+cd ../server
 npm install
 ```
 
-### 3. Install frontend dependencies
-
-```bash
-cd ../client
-npm install
-```
+### 3. Configure environment variables
+Create `.env` files in both `client` and `server` as shown above.
 
 ### 4. Start the backend
-
 ```bash
-cd ../server
+cd server
 npm run dev
 ```
 
 ### 5. Start the frontend
-
-Open a second terminal and run:
-
 ```bash
 cd client
 npm run dev
 ```
 
-Then open:
+### 6. Open the app
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:3000`
 
-```text
-http://localhost:5173
-```
+---
 
-## Useful routes and endpoints
+## Production Deployment
 
-### Public routes
+### Recommended Deployment Flow
 
-- GET `/api/public/stats`
-- GET `/api/public/health`
-
-### Authentication routes
-
-- POST `/api/auth/register`
-- POST `/api/auth/login`
-- POST `/api/auth/logout`
-- POST `/api/auth/forgot-password`
-- POST `/api/auth/reset-password`
-
-### Complaint routes
-
-- GET `/api/complaints`
-- GET `/api/complaints/:id`
-- POST `/api/complaints`
-- PUT `/api/complaints/:id`
-- DELETE `/api/complaints/:id`
-- POST `/api/complaints/:id/upvote`
-- GET `/api/complaints/:id/attachment`
-
-### Comment routes
-
-- GET `/api/comments/:complaintid`
-- POST `/api/comments`
-
-### User routes
-
-- GET `/api/users`
-- GET `/api/users/me`
-- PUT `/api/users/me`
-- PUT `/api/users/me/notifications`
-- GET `/api/users/:id`
-- PUT `/api/users/:id` (admin only)
-
-### Notification routes
-
-- GET `/api/notifications`
-- PUT `/api/notifications/:id/read`
-- PUT `/api/notifications/mark-all-read`
-
-## Frontend pages
-
-- Landing page with operational health status and public stats
-- Login page
-- Register page
-- Forgot password page
-- Reset password page
-- Dashboard page that routes to role-specific dashboards
-- Profile page for name, password, and notification settings
-- NotFound page
-
-## Deployment notes
-
-The app is structured to be deployed with:
-
-- Frontend: Vercel or similar static hosting
-- Backend: Render, Railway, or any Node.js hosting platform
-- Database: MongoDB Atlas
-
-Important deployment considerations:
-
-- Update `CLIENT_ORIGIN` in the server environment to match the live frontend URL
+#### Option 1: Vercel + Render
+- Deploy the React frontend to Vercel
+- Deploy the Express backend to Render
+- Host MongoDB on MongoDB Atlas
+- Configure the deployed frontend URL in `CLIENT_ORIGIN`
 - Set `VITE_API_URL` on the frontend to the deployed backend URL
-- Ensure the backend allows the frontend origin in CORS configuration
-- Configure Brevo API credentials for email delivery in production
 
-## Notes
+#### Option 2: Other Platforms
+- Client can be hosted on Netlify, Vercel, or any static host
+- Server can be hosted on Render, Railway, Fly.io, DigitalOcean, or a VPS
+- MongoDB Atlas is the recommended database choice
 
-- The backend uses cookie-based JWT authentication
-- The server applies request rate limiting for both general API traffic and authentication traffic
-- Attachment uploads are limited to images and PDFs, with a maximum size of 5 MB
-- The app uses a single Express entry file and modular routers/services for maintainability
+### Production Checklist
+- Set `NODE_ENV=production`
+- Configure a strong `JWT_SECRET`
+- Add correct `CLIENT_ORIGIN`
+- Add valid `BREVO_API_KEY` and `BREVO_SENDER_EMAIL`
+- Configure `GOOGLE_CLIENT_ID`
+- Ensure CORS allows the live frontend domain
+- Make sure MongoDB Atlas allows connections from your deployed backend server
+
+---
+
+## API Notes
+
+### Protected Routes
+Routes under:
+
+- `/api/complaints`
+- `/api/comments`
+- `/api/users`
+- `/api/notifications`
+
+require authentication through the `protect` middleware.
+
+### Public Routes
+These routes do not require authentication:
+
+- `/api/auth/login`
+- `/api/auth/register`
+- `/api/auth/google`
+- `/api/auth/forgot-password`
+- `/api/auth/reset-password`
+- `/api/auth/logout`
+- `/api/public/health`
+- `/api/public/stats`
+
+---
+
+## Project Highlights
+
+### UI / UX
+The app uses a clean, modern dashboard layout with:
+
+- Sidebar navigation per role
+- Notification bell
+- Theme toggle
+- Protected route handling
+- Error boundary for app-level resilience
+- Responsive table views and filtering
+
+### Security
+Implemented protections include:
+
+- JWT verification
+- Token version invalidation on logout/password changes
+- Role-based route restrictions
+- Rate limiting
+- Helmet for HTTP headers
+- Input validation through schemas and route checks
+- File size/type validation for uploads
+
+### Notifications & Emails
+The platform supports:
+
+- In-app notifications stored in MongoDB
+- Email delivery via Brevo for password resets and complaint notifications
+- Notification preferences per user
+
+---
+
+## Sample User Workflows
+
+### User Workflow
+1. Sign up or sign in
+2. File complaint with details and optional attachment
+3. Track complaint status from dashboard
+4. Upvote or comment on issues
+5. Receive updates when staff change status or assign the complaint
+
+### Staff Workflow
+1. Sign in as staff
+2. View all complaints
+3. Self-assign complaints from the dashboard
+4. Update statuses like `ASSIGNED`, `IN_PROGRESS`, `RESOLVED`, or `REJECTED`
+5. Respond to assigned tickets with visibility into complaint history
+
+### Admin Workflow
+1. Sign in as admin
+2. Manage users and roles
+3. Assign complaints to staff
+4. Review all complaints and resolve escalations
+5. Delete inappropriate or duplicate complaints
+
+---
+
+## Future Improvements
+
+This codebase already covers a strong base, and the next improvements could include:
+
+- Complaint export/reporting
+- Admin analytics dashboard
+- Real-time updates with websockets
+- Better attachment preview and download management
+- Searchable audit trails for complaint history
+- Improved bulk actions for staff/admin
+- Unit and integration tests
+
+---
+
+## License
+
+This project currently does not include a separate license file. Please check with the repository owner before commercial reuse or redistribution.
+
+---
 
 ## Credits
 
-- Built as part of the Shnoor International internship project
-- Frontend styling and components are powered by Tailwind CSS and DaisyUI
-- Email delivery is handled through Brevo
+Built for the Resolver project, with a modern React + Express stack and role-based complaint management workflows.
 
-```
+If you want, this README can also be adapted into a more GitHub-optimized version with a project banner, badges, demo screenshots, architecture diagram, and a polished landing section.
