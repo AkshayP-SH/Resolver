@@ -28,6 +28,7 @@ export default function Login() {
       if (!res.ok) throw new Error(data.message || 'Login failed');
 
       localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
       
       showToast('Welcome back!', 'success');
       navigate('/dashboard');

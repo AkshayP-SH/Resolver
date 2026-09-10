@@ -40,6 +40,7 @@ export default function Register() {
       if (!res.ok) throw new Error(data.message || 'Registration failed');
 
       localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
 
       showToast('Account created successfully!', 'success');
       navigate('/dashboard');

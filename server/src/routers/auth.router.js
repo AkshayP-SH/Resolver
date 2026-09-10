@@ -28,11 +28,13 @@ router.post('/login', async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            maxAge: 24 * 60 * 60 * 1000 
+            maxAge: 24 * 60 * 60 * 1000,
+            path: '/'
         });
         
         res.json({ 
-            message: "Login successful",    
+            message: "Login successful",
+            token: token,    
             user: { id: existuser._id, name: existuser.name, email: existuser.email, role: existuser.role }
         });
 
@@ -66,7 +68,7 @@ router.post('/register',async(req,res)=>{
             path: '/'
         });
         
-        res.status(201).json({ message: 'User registered successfully', user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role } });
+        res.status(201).json({ message: 'User registered successfully',token:token, user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role } });
     } catch (error) {
         res.status(500).json({message:"registration error",error});   
     }
