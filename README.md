@@ -4,7 +4,6 @@
   <p><strong>Digital Complaint Management Platform</strong></p>
   <p>
     <img alt="Status" src="https://img.shields.io/badge/Status-Production%20Ready-4CAF50?style=for-the-badge" />
-    <img alt="License" src="https://img.shields.io/badge/License-ISC-blue?style=for-the-badge" />
     <img alt="Frontend" src="https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
     <img alt="Client Build" src="https://img.shields.io/badge/Client-Build%20with%20Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
     <img alt="Backend" src="https://img.shields.io/badge/Backend-Express%205-000000?style=for-the-badge&logo=express&logoColor=white" />
@@ -315,19 +314,12 @@ npm run dev
 
 ## Production Deployment
 
-### Recommended Deployment Flow
-
-#### Option 1: Vercel + Render
+### Vercel + Render
 - Deploy the React frontend to Vercel
 - Deploy the Express backend to Render
 - Host MongoDB on MongoDB Atlas
 - Configure the deployed frontend URL in `CLIENT_ORIGIN`
 - Set `VITE_API_URL` on the frontend to the deployed backend URL
-
-#### Option 2: Other Platforms
-- Client can be hosted on Netlify, Vercel, or any static host
-- Server can be hosted on Render, Railway, Fly.io, DigitalOcean, or a VPS
-- MongoDB Atlas is the recommended database choice
 
 ### Production Checklist
 - Set `NODE_ENV=production`
@@ -423,28 +415,9 @@ The platform supports:
 
 ---
 
-## Future Improvements
-
-This codebase already covers a strong base, and the next improvements could include:
-
-- Complaint export/reporting
-- Admin analytics dashboard
-- Real-time updates with websockets
-- Better attachment preview and download management
-- Searchable audit trails for complaint history
-- Improved bulk actions for staff/admin
-- Unit and integration tests
-
----
-
-## License
-
-This project currently does not include a separate license file. Please check with the repository owner before commercial reuse or redistribution.
-
----
-
 ## Credits
 
-Built for the Resolver project, with a modern React + Express stack and role-based complaint management workflows.
+- Built as part of the Shnoor International internship project
+- Frontend styling and components are powered by Tailwind CSS and DaisyUI
+- Email delivery is handled through Brevo
 
-If you want, this README can also be adapted into a more GitHub-optimized version with a project banner, badges, demo screenshots, architecture diagram, and a polished landing section.
