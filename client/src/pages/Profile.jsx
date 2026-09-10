@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyProfile, updateMyProfile, updateNotificationPreference, logout } from '../services/api';
+import { getMyProfile, updateMyProfile, updateNotificationPreference, logout, linkGoogleAccount, unlinkGoogleAccount } from '../services/api';
 import { showToast } from '../services/toast';
+import GoogleButton from '../components/GoogleButton';
 
 export default function Profile() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [linking, setLinking] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
   
   const [user, setUser] = useState(null);
   const [name, setName] = useState('');
@@ -61,7 +64,9 @@ export default function Profile() {
 
     setSaving(true);
     try {
-      await updateMyProfile({ currentPassword, newPassword });
+      const updatedUser = await updateMyProfile({ currentPassword, newPassword });
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify({ ...JSON.parse(localStorage.getItem('user')), hasPassword: true }));
       showToast('Password changed successfully', 'success');
       setCurrentPassword('');
       setNewPassword('');
@@ -85,6 +90,36 @@ export default function Profile() {
     }
   };
 
+  const handleLinkGoogle = async (credential) => {
+    setLinking(true);
+    try {
+      const data = await linkGoogleAccount(credential);
+      setUser(data.user);
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('user', JSON.stringify({ ...stored, hasGoogle: true }));
+      showToast('Google account connected', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to connect Google', 'error');
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  const handleUnlinkGoogle = async () => {
+    setUnlinking(true);
+    try {
+      const data = await unlinkGoogleAccount();
+      setUser(data.user);
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('user', JSON.stringify({ ...stored, hasGoogle: false }));
+      showToast('Google account disconnected', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to disconnect Google', 'error');
+    } finally {
+      setUnlinking(false);
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><span className="loading loading-spinner loading-lg"></span></div>;
 
   const labelCls = 'block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-2';
@@ -98,7 +133,6 @@ export default function Profile() {
           <p className="text-base-content/60 mt-2">Update your personal details and preferences.</p>
         </div>
 
-        {/* Profile Info */}
         <div className="card bg-base-100 border border-base-300 rounded-none">
           <div className="card-body p-6 md:p-8">
             <h2 className="text-lg font-bold mb-6 border-b border-base-300 pb-2">Personal Information</h2>
@@ -121,7 +155,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Change Password */}
         <div className="card bg-base-100 border border-base-300 rounded-none">
           <div className="card-body p-6 md:p-8">
             <h2 className="text-lg font-bold mb-6 border-b border-base-300 pb-2">Change Password</h2>
@@ -149,7 +182,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Notification Preferences */}
         <div className="card bg-base-100 border border-base-300 rounded-none">
           <div className="card-body p-6 md:p-8">
             <h2 className="text-lg font-bold mb-6 border-b border-base-300 pb-2">Notification Preferences</h2>
@@ -167,6 +199,45 @@ export default function Profile() {
                   onChange={handleToggleEmailNotifs} 
                 />
               </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 border border-base-300 rounded-none">
+          <div className="card-body p-6 md:p-8">
+            <h2 className="text-lg font-bold mb-6 border-b border-base-300 pb-2">Connected Accounts</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="font-semibold text-base-content">Google</p>
+                <p className="text-sm text-base-content/60 mt-1">
+                  {user?.hasGoogle
+                    ? `Connected as ${user.email}`
+                    : 'Sign in faster with your Google account.'}
+                </p>
+                {!user?.hasGoogle && (
+                  <p className="text-xs text-base-content/50 mt-1 italic">
+                    Must match your Resolver email: {user?.email}
+                  </p>
+                )}
+              </div>
+              {user?.hasGoogle ? (
+                <button
+                  onClick={handleUnlinkGoogle}
+                  disabled={unlinking || !user?.hasPassword}
+                  className="btn btn-error btn-outline btn-sm rounded-none font-semibold"
+                  title={!user?.hasPassword ? 'Set a password first to prevent lockout' : 'Disconnect Google'}
+                >
+                  {unlinking ? <span className="loading loading-spinner loading-xs"></span> : 'Disconnect'}
+                </button>
+              ) : (
+                <div className="min-w-55">
+                  <GoogleButton
+                    onSuccess={handleLinkGoogle}
+                    label="Connect Google"
+                    disabled={linking}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

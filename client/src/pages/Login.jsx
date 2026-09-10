@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
 import AuthShowcase from '../components/AuthShowcase';
+import GoogleButton from '../components/GoogleButton';
 import { showToast } from '../services/toast';
+import { googleAuth } from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -39,6 +41,14 @@ export default function Login() {
     }
   };
 
+  const handleGoogleLogin = async (credential) => {
+    const data = await googleAuth(credential);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('token', data.token);
+    showToast('Welcome back!', 'success');
+    navigate('/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-base-200 grid grid-cols-1 lg:grid-cols-2">
       
@@ -63,7 +73,15 @@ export default function Login() {
               <p className="text-base-content/60 mt-2">Enter your credentials to access your dashboard.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in-up delay-1">
+            <div className="animate-fade-in-up delay-1">
+              <GoogleButton onSuccess={handleGoogleLogin} label="Continue with Google" />
+            </div>
+
+            <div className="divider text-xs uppercase tracking-widest text-base-content/40 font-bold my-2">
+              or continue with email
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in-up delay-2">
               
               <div className="form-control">
                 <label className="label pb-2"><span className="label-text uppercase tracking-widest text-[11px] font-bold text-base-content/70">Email Address</span></label>
@@ -111,13 +129,13 @@ export default function Login() {
               </button>
             </form>
 
-            <p className="text-right mt-2 animate-fade-in-up delay-2">
+            <p className="text-right mt-2 animate-fade-in-up delay-3">
               <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline transition-all ">
                 Forgot password?
               </Link>
             </p>
 
-            <p className="text-center text-base-content/60 animate-fade-in-up delay-2">
+            <p className="text-center text-base-content/60 animate-fade-in-up delay-3">
               Don't have an account?{' '}
               <Link to="/register" className="font-bold text-primary hover:underline transition-all">
                 Create one
