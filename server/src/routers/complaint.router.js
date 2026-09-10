@@ -2,12 +2,10 @@ import express from 'express';
 import Complaint from '../models/Complaint.js';
 import Comment from '../models/Comment.js';
 import multer from 'multer';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import { createNotification, sendEmailNotification } from '../services/notificationService.js';
 
 const router = express.Router();
 
-router.use(protect);
 
 router.post('/', async (req, res) => {
     try {

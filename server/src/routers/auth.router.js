@@ -24,8 +24,14 @@ router.post('/login', async (req, res) => {
         if(!existuser){
             return res.status(404).json({message:"Invalid username or password"});
         }
+
+        if (!existuser.password) {
+            return res.status(401).json({
+                message: 'This account uses Google sign-in. Please sign in with Google or set a password first.'
+            });
+        }
         
-        const pmatch = await bcrypt.compare(password,existuser.password);
+        const pmatch = await bcrypt.compare(password, existuser.password);
         if(!pmatch){
             return res.status(401).json({message:"Invalid username or password"});
         }

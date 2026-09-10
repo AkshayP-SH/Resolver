@@ -37,14 +37,24 @@
     if (req.body.name) user.name = req.body.name;
 
     if (req.body.newPassword) {
-      if (!req.body.currentPassword) {
-        return res.status(400).json({ message: 'Current password is required to change password' });
+      const newPassword = String(req.body.newPassword).trim();
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
       }
-      const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ message: 'Current password is incorrect' });
+
+      if (user.password) {
+        if (!req.body.currentPassword) {
+          return res.status(400).json({ message: 'Current password is required to change your password' });
+        }
+
+        const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
+        if (!isMatch) {
+          return res.status(400).json({ message: 'Current password is incorrect' });
+        }
       }
-      user.password = req.body.newPassword;
+
+      user.password = newPassword;
       user.tokenVersion += 1;
     }
 

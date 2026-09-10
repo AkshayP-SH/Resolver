@@ -61,10 +61,17 @@ export default function Profile() {
       showToast('Password must be at least 6 characters', 'error');
       return;
     }
+    if (user?.hasPassword && !currentPassword) {
+      showToast('Current password is required to change your password', 'error');
+      return;
+    }
 
     setSaving(true);
     try {
-      const updatedUser = await updateMyProfile({ currentPassword, newPassword });
+      const updatedUser = await updateMyProfile({
+        ...(user?.hasPassword ? { currentPassword } : {}),
+        newPassword,
+      });
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify({ ...JSON.parse(localStorage.getItem('user')), hasPassword: true }));
       showToast('Password changed successfully', 'success');
@@ -160,8 +167,14 @@ export default function Profile() {
             <h2 className="text-lg font-bold mb-6 border-b border-base-300 pb-2">Change Password</h2>
             <form onSubmit={handleChangePassword} className="space-y-6">
               <div>
-                <label className={labelCls}>Current Password</label>
-                <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={fieldCls} required />
+                <label className={labelCls}>{user?.hasPassword ? 'Current Password' : 'Current Password (optional for first-time setup)'}</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className={fieldCls}
+                  required={Boolean(user?.hasPassword)}
+                />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

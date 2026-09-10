@@ -8,22 +8,34 @@ const apiFetch = async (url, options = {}) => {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }) 
   };
-  
+
   const response = await fetch(url, {
     ...options,
     headers: { ...defaultHeaders, ...options.headers },
     credentials: 'include',
   });
 
-  const data = await response.json();
+  const contentType = response.headers.get('content-type') || '';
+  const hasJsonBody = contentType.includes('application/json');
+
+  let data = null;
+
+  if (response.status === 204) {
+    data = null;
+  } else if (hasJsonBody) {
+    data = await response.json().catch(() => null);
+  } else {
+    data = await response.text().catch(() => null);
+  }
+
   if (!response.ok) {
     if(response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     }
-    throw new Error(data.message || 'Request failed');
-    
+    throw new Error(data?.message || data || 'Request failed');
   }
+
   return data;
 };
 
