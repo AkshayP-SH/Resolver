@@ -2,12 +2,13 @@ import express from 'express';
 import Complaint from '../models/Complaint.js';
 import Comment from '../models/Comment.js';
 import multer from 'multer';
+import { upload } from '../middleware/uploadMiddleware.js';
 import { createNotification, sendEmailNotification } from '../services/notificationService.js';
 
 const router = express.Router();
 
 
-router.post('/', async (req, res) => {
+router.post('/', upload.single('attachment'), async (req, res) => {
     try {
         const { title, description, category, location, priority } = req.body;
         const newcomplaint = new Complaint({ 
