@@ -12,6 +12,7 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 import ToastContainer from './components/Toast.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import './App.css'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             
             <Route element={<GuestRoute />}>
               <Route path="/login" element={<Login />} />

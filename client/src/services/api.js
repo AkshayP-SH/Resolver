@@ -133,6 +133,26 @@ export const updateMyProfile = async (profileData) => {
   return data;
 };
 
+export const googleAuth = async (credential) => {
+  return apiFetch(`${API_URL}/api/auth/google`, {
+    method: 'POST',
+    body: JSON.stringify({ credential }),
+  });
+};
+
+export const linkGoogleAccount = async (credential) => {
+  return apiFetch(`${API_URL}/api/auth/google/link`, {
+    method: 'POST',
+    body: JSON.stringify({ credential }),
+  });
+};
+
+export const unlinkGoogleAccount = async () => {
+  return apiFetch(`${API_URL}/api/auth/google/unlink`, {
+    method: 'POST',
+  });
+};
+
 export const logout = async () => {
   try {
     await apiFetch(`${API_URL}/api/auth/logout`, { method: 'POST' });

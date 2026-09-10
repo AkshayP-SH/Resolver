@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
 import AuthShowcase from '../components/AuthShowcase';
+import GoogleButton from '../components/GoogleButton';
 import { showToast } from '../services/toast';
+import { googleAuth } from '../services/api';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -51,6 +53,14 @@ export default function Register() {
     }
   };
 
+  const handleGoogleRegister = async (credential) => {
+    const data = await googleAuth(credential);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('token', data.token);
+    showToast('Account created with Google!', 'success');
+    navigate('/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-base-200 grid grid-cols-1 lg:grid-cols-2">
       
@@ -75,7 +85,15 @@ export default function Register() {
               <p className="text-base-content/60 mt-2">Get started with your Resolver profile.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in-up delay-1">
+            <div className="animate-fade-in-up delay-1">
+              <GoogleButton onSuccess={handleGoogleRegister} label="Sign up with Google" />
+            </div>
+
+            <div className="divider text-xs uppercase tracking-widest text-base-content/40 font-bold my-2">
+              or register with email
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in-up delay-2">
               
               <div className="form-control">
                 <label className="label pb-2"><span className="label-text uppercase tracking-widest text-[11px] font-bold text-base-content/70">Full Name</span></label>
@@ -153,7 +171,7 @@ export default function Register() {
               </button>
             </form>
 
-            <p className="text-center text-base-content/60 animate-fade-in-up delay-2">
+            <p className="text-center text-base-content/60 animate-fade-in-up delay-3">
               Already have an account?{' '}
               <Link to="/login" className="font-bold text-primary hover:underline transition-all">
                 Sign in
