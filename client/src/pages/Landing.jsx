@@ -73,77 +73,70 @@ export default function Landing() {
           </svg>
         </div>
 
-        <div className="max-w-6xl mx-auto px-8 w-full py-20 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 md:py-20 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary mb-6 animate-fade-in-up">
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-primary mb-4 sm:mb-6 animate-fade-in-up">
                 Digital Complaint Portal
               </p>
 
-              <h1 className="text-6xl lg:text-7xl font-black tracking-tight leading-none animate-fade-in-up delay-1">
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-tight lg:leading-none animate-fade-in-up delay-1">
                 Track complaints.
-                <br />
+                <br className="hidden sm:block" />
+                <span className="sm:hidden"> </span>
                 Resolve faster.
               </h1>
 
-              <p className="text-lg text-base-content/60 mt-8 max-w-md leading-relaxed animate-fade-in-up delay-2">
+              <p className="text-base sm:text-lg text-base-content/60 mt-6 sm:mt-8 max-w-md leading-relaxed animate-fade-in-up delay-2">
                 File a complaint in 30 seconds. Get assigned to staff in minutes. Track every step until it's resolved.
               </p>
 
-              <div className="flex gap-4 mt-10 animate-fade-in-up delay-3">
+              <div className="mt-8 sm:mt-10 animate-fade-in-up delay-3">
                 <Link
                   to="/register"
-                  className="btn btn-primary rounded-none px-8 py-3 text-base font-semibold group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+                  className="btn btn-primary w-full sm:w-auto rounded-none px-6 sm:px-8 py-3 text-base font-semibold group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
                 >
                   Create Account
                   <svg className="w-4 h-4 ml-1 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </Link>
-                <button
-                  onClick={() => alert('anonymous reporting coming soon')}
-                  className="btn btn-outline rounded-none px-8 py-3 text-base font-semibold hover:-translate-y-1 hover:shadow-xl hover:shadow-base-300/30 hover:bg-base-100 transition-all duration-300"
-                >
-                  Report Anonymously
-                </button>
               </div>
             </div>
 
             <div className="space-y-4 animate-fade-in-up delay-2">
 
-              <div className="border border-base-300 bg-base-100 p-8 hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-base-300/20 transition-all duration-300 cursor-default group">
-                <p className="text-5xl lg:text-6xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">
+              <div className="border border-base-300 bg-base-100 p-6 sm:p-8 hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-base-300/20 transition-all duration-300 cursor-default group">
+                <p className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">
                   {statsLoading ? <span className="animate-pulse text-base-content/20">--</span> : stats.totalResolved}
                 </p>
-                <p className="text-sm text-base-content/50 mt-3 uppercase tracking-[0.15em] font-bold">Complaints resolved</p>
+                <p className="text-xs sm:text-sm text-base-content/50 mt-2 sm:mt-3 uppercase tracking-[0.15em] font-bold">Complaints resolved</p>
               </div>
 
-              {/* stat 2 */}
-              <div className="border border-base-300 bg-base-100 p-8 hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-base-300/20 transition-all duration-300 cursor-default group">
-                <p className="text-5xl lg:text-6xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">
+              <div className="border border-base-300 bg-base-100 p-6 sm:p-8 hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-base-300/20 transition-all duration-300 cursor-default group">
+                <p className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">
                   {statsLoading ? <span className="animate-pulse text-base-content/20">--</span> : `${stats.avgTimeHours}h`}
                 </p>
-                <p className="text-sm text-base-content/50 mt-3 uppercase tracking-[0.15em] font-bold">Avg resolution time</p>
+                <p className="text-xs sm:text-sm text-base-content/50 mt-2 sm:mt-3 uppercase tracking-[0.15em] font-bold">Avg resolution time</p>
               </div>
 
-              {/* health status */}
-              <div className={`border p-6 flex items-center gap-4 transition-all duration-300 ${
+              <div className={`border p-4 sm:p-6 flex items-center gap-3 sm:gap-4 transition-all duration-300 ${
                 isOperational
                   ? 'border-base-300 bg-base-100 hover:border-success/40'
                   : 'border-error/30 bg-error/5'
               }`}>
-                <div className="relative flex h-3 w-3">
+                <div className="relative flex h-3 w-3 shrink-0">
                   {isOperational && (
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                   )}
                   <span className={`relative inline-flex rounded-full h-3 w-3 ${isOperational ? 'bg-success' : 'bg-error'}`}></span>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-bold">
                     {isOperational ? 'All systems operational' : 'Service degraded'}
                   </p>
-                  <p className="text-xs text-base-content/40 mt-0.5">
+                  <p className="text-xs text-base-content/40 mt-0.5 truncate">
                     {isOperational ? 'Live complaint tracking active' : 'Backend or database unreachable'}
                   </p>
                 </div>
@@ -154,17 +147,12 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-base-300">
-        <div className="max-w-6xl mx-auto px-8 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <img src="/favicon.svg" alt="Resolver" className="w-5 h-5 opacity-40" />
-            <span className="text-sm text-base-content/40 font-medium">
+            <span className="text-xs sm:text-sm text-base-content/40 font-medium text-center md:text-left">
               © 2026 Resolver — Built for Shnoor International
             </span>
-          </div>
-          <div className="flex gap-8 text-sm text-base-content/40 font-medium">
-            <a href="#" className="hover:text-base-content transition-colors duration-200">About</a>
-            <a href="#" className="hover:text-base-content transition-colors duration-200">Privacy</a>
-            <a href="#" className="hover:text-base-content transition-colors duration-200">Terms</a>
           </div>
         </div>
       </footer>
