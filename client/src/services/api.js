@@ -17,7 +17,12 @@ const apiFetch = async (url, options = {}) => {
 
   const data = await response.json();
   if (!response.ok) {
+    if(response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
     throw new Error(data.message || 'Request failed');
+    
   }
   return data;
 };
@@ -51,10 +56,12 @@ export const createComplaint = async (complaintData) => {
     formData.append('priority', complaintData.priority);
     formData.append('attachment', complaintData.attachment);
     
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/api/complaints`, {
       method: 'POST',
       body: formData,
       credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     
     const data = await response.json();
