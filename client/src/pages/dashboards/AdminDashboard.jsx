@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0); 
-  const [updatingId, setUpdatingId] = useState(null); // <-- ADDED: Tracks which upvote button is loading
+  const [updatingId, setUpdatingId] = useState(null);
   
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
 
   const handleUpvote = async (e, complaintId) => {
     e.stopPropagation();
-    setUpdatingId(complaintId); // 1. Lock button immediately
+    setUpdatingId(complaintId);
     try { 
       await upvoteComplaint(complaintId); 
       await refreshAll(); 
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
     } catch (error) { 
       showToast('Failed to upvote', 'error'); 
     } finally {
-      setUpdatingId(null); // 2. Unlock immediately after response
+      setUpdatingId(null);
     }
   };
 

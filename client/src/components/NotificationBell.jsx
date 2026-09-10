@@ -18,12 +18,10 @@ export default function NotificationBell() {
     }
   };
 
-  // fetch once on mount so badge is visible
   useEffect(() => {
     fetchNotifications();
   }, []);
 
-  // expose refresh function to parent components
   useEffect(() => {
     window.refreshNotifications = fetchNotifications;
     return () => {
@@ -31,7 +29,6 @@ export default function NotificationBell() {
     };
   }, []);
 
-  // close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {

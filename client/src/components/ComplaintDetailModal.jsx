@@ -216,7 +216,6 @@ const ComplaintDetailModal = ({ complaint, onClose, onUpdate }) => {
             </div>
           </div>
 
-          {/* TABS */}
           <div className="flex border-b border-base-300 bg-base-200/20">
             <button 
               onClick={() => setActiveTab('details')} 

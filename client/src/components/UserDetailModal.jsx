@@ -19,7 +19,7 @@ export default function UserDetailModal({ user, onClose, onUpdate }) {
       showToast('User role updated!', 'success');
       
       if (onUpdate) {
-        await onUpdate(); // Wait for parent fetch to complete
+        await onUpdate();
       }
       
       setTimeout(() => onClose(), 500);

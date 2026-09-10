@@ -22,7 +22,7 @@ export default function Profile() {
         const data = await getMyProfile();
         setUser(data);
         setName(data.name);
-        setEmailNotifs(data.emailNotifications !== false); // default to true if missing
+        setEmailNotifs(data.emailNotifications !== false);
       } catch (error) {
         showToast('Failed to load profile', 'error');
         navigate('/login');
@@ -80,7 +80,7 @@ export default function Profile() {
       await updateNotificationPreference(newValue);
       showToast(`Email notifications ${newValue ? 'enabled' : 'disabled'}`, 'success');
     } catch (err) {
-      setEmailNotifs(!newValue); // revert on error
+      setEmailNotifs(!newValue);
       showToast('Failed to update preference', 'error');
     }
   };

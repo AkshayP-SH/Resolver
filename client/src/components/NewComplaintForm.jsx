@@ -132,7 +132,6 @@ export default function NewComplaintForm({ onCreated }) {
           />
         </div>
 
-        {/* attachment */}
         <div>
           <label className={labelCls}>Attachment (Optional)</label>
           <div className="border border-base-300 rounded-none p-4 bg-base-200/40">

@@ -14,7 +14,7 @@ export default function StatusChangeModal({ newStatus, onClose, onConfirm }) {
     
     setLoading(true);
     try {
-      await onConfirm(explanation); // Wait for parent to finish updating
+      await onConfirm(explanation);
     } catch (err) {
       console.error('StatusChangeModal error:', err);
       showToast('Failed to update status', 'error');

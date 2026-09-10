@@ -45,7 +45,7 @@
         return res.status(400).json({ message: 'Current password is incorrect' });
       }
       user.password = req.body.newPassword;
-      //user.tokenVersion += 1;
+      user.tokenVersion += 1;
     }
 
     const updatedUser = await user.save();
